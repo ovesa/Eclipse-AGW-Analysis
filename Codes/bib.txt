@@ -1,0 +1,44 @@
+
+
+
+Websites:
+
+General Websites:
+
+https://geo.libretexts.org/Bookshelves/Meteorology_and_Climate_Science/Practical_Meteorology_(Stull)/01%3A_Atmospheric_Basics/1.07%3A_Atmospheric_Structure
+https://support.outpostcentral.com/hc/en-us/articles/217905463-Wind-speed-calculation
+http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv
+https://slideplayer.com/slide/8175190/
+
+
+
+
+
+Python Related Websites:
+
+[https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html]
+[https://stackoverflow.com/questions/30533021/interpolate-or-extrapolate-only-small-gaps-in-pandas-dataframe]
+[https://stackoverflow.com/questions/71493065/what-is-the-difference-between-the-autocorrelation-functions-provided-by-statsmo]
+
+
+Journals:
+
+[Colligan et. al, 2020] -- https://www.nature.com/articles/s41598-020-75098-2
+
+[Zink and Vincent, 2001] -- https://digital.library.adelaide.edu.au/dspace/bitstream/2440/12560/1/hdl_12560.pdf
+
+[Moffat‐Griffin et. al, 2011] -- https://core.ac.uk/download/pdf/385434.pdf
+
+[Vincent and Alexander, 2000] -- https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2000JD900196
+
+[Sakib and Yigit, 2022] -- https://www.frontiersin.org/articles/10.3389/fspas.2022.824875/full
+
+[Sato and Yamada ,1994] -- https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/94JD01818
+
+[Werner et al, 2007] -- https://www.sciencedirect.com/science/article/abs/pii/S136468260700137X
+
+[Torrence and Campo,1998] -- https://psl.noaa.gov/people/gilbert.p.compo/Torrence_compo1998.pdf
+
+[Koushik et. al, 2019] -- https://sci-hub.st/10.1007/s00382-019-04665-9
+
+[Pfenninger et. al, 1999] -- https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/98JD02705
