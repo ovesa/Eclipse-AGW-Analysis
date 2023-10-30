@@ -213,7 +213,7 @@ coiMask = np.array(
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 3
+peak_nom = 7
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
