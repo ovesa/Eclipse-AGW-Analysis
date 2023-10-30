@@ -547,3 +547,19 @@ def extract_boundaries_around_peak(power_array, peaks, peak_nom):
     # The area pertaining to the boundary of the identified AGW packet is set as True.
     peak_containers[row_coords[:, np.newaxis], col_coords] = True
     return peak_containers
+
+
+
+def convert_seconds_to_timestamp(dataframe, initial_timestamp_for_flight):
+    """
+    Convert remaining time column in seconds to a timestamp with date and time in UTC.
+
+    Arguments:
+        dataframe -- The Pandas DataFrame
+        initial_timestamp_for_flight -- The intial timestamp for the flight [Timestamp]
+
+    Returns:
+        A new time column in UTC.
+    """    
+    dataframe["Time [UTC]"] = pd.to_datetime(dataframe["Time [sec]"], unit='s', origin=str(initial_timestamp_for_flight))
+    return dataframe

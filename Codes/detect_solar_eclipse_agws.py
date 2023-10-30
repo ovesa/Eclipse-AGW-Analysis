@@ -78,7 +78,7 @@ spatial_resolution = 5
 # Interpolation starts anew after hitting the interpolation limit
 interpolation_limit = 1000
 
-dat = datafunctions.clean_data(dat, tropopause_height, original_data_shape)
+dat, new_initial_time = datafunctions.clean_data(dat, tropopause_height, original_data_shape)
 
 dat = datafunctions.interpolate_data(dat, interpolation_limit)
 
@@ -87,6 +87,8 @@ data_sections = datafunctions.check_data_for_interpolation_limit_set(
 )
 
 dat = datafunctions.set_spatial_resolution_for_data(data_sections, spatial_resolution)
+
+pd.to_datetime(dat["Time [sec]"], unit='s', origin=str(starting_time_for_flight))
 
 ################### Zonal & Meridional Components of Wind Speed ###################
 
