@@ -247,3 +247,28 @@ def plot_power_surface(
             bbox_inches="tight",
         )
     return fig
+
+
+
+def plot_potential_temperature_vs_pressure(potential_temperature_array, temperature_array, pressure_array):
+    """
+    Creates a plot of the potential temperature anf the climatological atmospheric temperature versus atmospheric pressure.
+
+    Arguments:
+        potential_temperature_array -- Potential temperature array [K].
+        temperature_array -- Atmospheric temperature array [K]
+        pressure_array -- Atmospheric pressure array [K]
+
+    Returns:
+        A figure
+    """
+    
+    fig = plt.figure()
+    plt.plot(potential_temperature_array, pressure_array, label="Potential Temperature [K]")
+    plt.plot(temperature_array, pressure_array, label="Temperature [K]")
+
+    plt.gca().invert_yaxis()
+    plt.xlabel("Temperature [K]")
+    plt.ylabel("Pressure [hPa]")
+    plt.legend(loc ='best',fancybox=True )
+    return fig

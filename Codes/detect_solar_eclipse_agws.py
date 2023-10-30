@@ -60,11 +60,10 @@ dat = datafunctions.read_grawmet_profile(fname[file_nom])
 ) = datafunctions.grab_initial_grawmet_profile_parameters(dat)
 
 print("\n")
-print("Starting Time: %s UTC" % starting_time_for_flight)
-print("Ending Time: %s UTC" % ending_time_for_flight)
-print("Starting Altitude: %s m" % original_min_altitude)
+print("Information about datasheet:")
+print("Time range: [%s, %s] UTC" % (starting_time_for_flight,ending_time_for_flight))
+print("Altitude range: [%s, %s] m" % (original_min_altitude,original_max_altitude))
 print("\n")
-
 
 ################### Preprocess and Interpolate Data ###################
 
@@ -163,7 +162,7 @@ t_coef, t_periods, t_scales, t_coi = datafunctions.compute_wavelet_components(
 
 # [Koushik et al, 2019] -- Power surface is sum of squares of the U and V wavelet transformed surfaces
 # S(a,z) = abs(U(a,z))^2  + abs(V(a,z))^2; a = vertical wavelength, z = height
-power = abs(u_coef) ** 2 + abs(v_coef) ** 2
+power = abs(u_coef) ** 2 + abs(v_coef) ** 2  # [m^2/s^2]
 
 # Calculate the significance of the wavelet coefficients
 alpha_u = datafunctions.acorr(
@@ -252,16 +251,17 @@ it_wave = wavelet_method2.icwt(t_invert, t_scales, dt, dj, wavelet_method2.Morle
 
 fig = plt.figure(figsize=[5, 4])
 
-plt.plot(iu_wave.real, iv_wave.real, color="k", linewidth=1.5)
+plt.plot(iu_wave.real, iv_wave.real, color="k", linewidth=1.5,zorder=0)
 
 plt.scatter(
     iu_wave.real[0],
     iv_wave.real[0],
     color="r",
     marker="o",
-    s=25,
-    zorder=0,
+    s=35,
+    zorder=1, edgecolor='k',
 )
+
 plt.annotate(
     "%.1f km" % (choose_data_frame_analyze["Geopot [m]"].iloc[0] / 1000),
     (iu_wave.real[0], iv_wave.real[0]),
@@ -272,8 +272,8 @@ plt.scatter(
     iv_wave.real[-1],
     color="gold",
     marker="o",
-    s=25,
-    zorder=0,
+    s=35,
+    zorder=1, edgecolor='k',
 )
 
 plt.annotate(
@@ -290,24 +290,27 @@ plt.show()
 
 ################### Extracting Wave Parameters ###################
 
+# Constants
+grav_constant = 9.81  # gravity [m/s^2]
+ps = 1000  # standard pressure [hPa] -- equal to 1 millibar
+kappa = 2 / 7 # Poisson constant for dry air 
+celsius_to_kelvin_conversion = 273.15 # 0 Celsium == 273.15 K
 
-# Potential temperature -- temperature a parcel of air would have if lowered adiabatically
+temperature_K =  (choose_data_frame_analyze["T [°C]"] + celsius_to_kelvin_conversion)
+
+# Potential temperature -- temperature a parcel of air would have if moved adiabatically (no heat exchange)
 # Eqn. 1 from [Pfenninger et. al, 1999]
-ps = 1000  # hpa
-kappa = 2 / 7
 potential_temperature = (
-    choose_data_frame_analyze["T [°C]"]
+    (temperature_K)
     * (ps / choose_data_frame_analyze["P [hPa]"]) ** kappa
-)
+)  # [K]
 
 # Mean buoyancy frequency -- describs the stability of the region
 # Eqn. 4 from [Pfenninger et. al, 1999]
-g = 9.81  # gravity [m/s^2]
 mean_buoyancy_frequency = np.sqrt(
-    g * potential_temperature * np.gradient(potential_temperature, spatial_resolution)
+    grav_constant * potential_temperature * np.gradient(potential_temperature, spatial_resolution)
 )
 # need to average over the vertical extent of the wave
-
 
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency
 

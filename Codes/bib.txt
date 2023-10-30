@@ -11,6 +11,9 @@ http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv
 https://slideplayer.com/slide/8175190/
 
 
+Potential Temperature:
+https://www.aoml.noaa.gov/ftp/hrd/annane/prelim_notes/Potential_Temperature.pdf
+https://glossary.ametsoc.org/wiki/Potential_temperature
 
 
 
