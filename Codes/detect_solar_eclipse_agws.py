@@ -209,6 +209,12 @@ peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 peak_nom = 0
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
+associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
+associated_height_range_of_boundary =  choose_data_frame_analyze["Geopot [m]"].iloc[boundary_cols] # m
+
+associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[peak_nom[1]]] # m
+associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom[1]]] # TimeStamp [UTC]
+
 ################### Plot Power Surface ###################
 
 colormap = cm.chroma
