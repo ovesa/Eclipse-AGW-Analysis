@@ -146,9 +146,13 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
 
 ################### Wavelet Analysis ###################
 
+# padding for the end of the time series
 padding = 1
+# the spacing between discrete scales
 dj = 0.01
+# the amount of height between each recorded height value
 dt = spatial_resolution
+# The smallest sale of the wavelet
 s0 = 2 * dt
 # [Zink and Vincent, 2001] -- first order perturbations of a GW packet resembles sine wave ~ Morelet wavelet
 mother_wavelet = "MORLET" 
@@ -286,6 +290,7 @@ mean_buoyancy_frequency = np.sqrt(
 ) # [Hz]
 
 # average over boundary which wave was detected
+# Upper frequency for the gravity waves
 mean_buoyancy_frequency = mean_buoyancy_frequency[boundary_cols[0]:boundary_cols[1]].mean(skipna=True) # [Hz]
 
 # Mean buoyancy period
@@ -304,19 +309,24 @@ Stokes_D = np.mean(iu_wave.real**2) - np.mean(iv_wave.real**2)
 # P and Q are the in phase and quadrature components between wave components
 Stokes_P = 2 * np.mean(iu_wave.real * iv_wave.real)
 # measure of the circular polarization
-# Determines the rotation of the polarized ellipse
+# Sense rotation of the polarized ellipse
 Stokes_Q = 2 * np.mean(iu_wave.real * hilbert_v)
 
 # [Pfenninger et. al, 1999] -- think of Stokes Q as the energy difference betwen propagating AGWs
-if Stokes_Q >= 0:
+# [Koushik et. al, 2019] -- Stokes  Q -- sense of rotation of th[boundary_cols[0]:boundary_cols[1]]e polarizaition ellipse
+if Stokes_Q > 0:
     print("Wave energy propagating upward")
     print("Clockwise rotation of the polarized ellipse")
+    print("Stokes Q is positive")
 else:
     print("Wave energy propagating downwards")
     print("Anticlockwise rotation of the polarized ellipse")
+    print("Stokes Q is negative")
+
 
 
 # stastical measure of the coherence of the wave field
+# degree of polarization
 polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
 
 
@@ -328,18 +338,23 @@ elif polarization_factor == 1:
 elif polarization_factor == 0:
     print("d=%.2f -- Not an AGW; no polarization relationship"%polarization_factor)
 else:
-    print("d=%.2f -- Might not be an AGW. Polarization factor too low"%polarization_factor)
+    print("d=%.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
+
+# [Koushik et. al, 2019]  -- stokes p and q less than threshodl value are not agws
+if np.abs(Stokes_P) < 0.5 or np.abs(Stokes_Q) < 0.5:
+    print("Might not be an AGW; representative of poor wave activity")
 
 
 
 # dynamic shear instability -- Richardson Number
-# richardson_number = mean_buoyancy_frequency**2 / ((du / dz) ** 2 + (dv / dz) ** 2)
-
+richardson_number = mean_buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations,choose_data_frame_analyze["Geopot [m]"])**2 + np.gradient(v_meridional_perturbations,choose_data_frame_analyze["Geopot [m]"])**2   )
+richardson_number = np.mean(richardson_number)
 # [Pfenninger et. al, 1999] -
 # if N^2 and R < 0
-if mean_buoyancy_frequency**2 < 0:
+if mean_buoyancy_frequency**2 < 0 and richardson_number < 0:
     print("Convectively unstable")
-# dynamic instability --- 0 < R < 0.25
+elif 0 < richardson_number < 0.25:
+    print("Dynamically unstable")
 
 # Eqn. 11 from [Pfenninger et. al, 1999]
 # Orientation of major axis of ellipse
@@ -349,11 +364,6 @@ if mean_buoyancy_frequency**2 < 0:
 # 180 deg ambiguity
 # horizontal direction of propagation of GW (deg clockwise from N)
 theta = np.arctan2(Stokes_P, Stokes_D) / 2
-
-
-# [Koushik et. al, 2019]  -- stokes p and q less than threshodl value are not agws
-if np.abs(Stokes_P) and np.abs(Stokes_Q) < 0.5:
-    print("Might not be an AGW")
 
 
 # Coriolis Force
@@ -402,27 +412,55 @@ eta = (0.5) * np.arcsin(
 # https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018JD029164
 axial_ratio = 1 / np.tan(eta)
 
+
+
+# [Koushik et. al, 2019] -- typical values of axial ratios [1.0, 3.5]; median: 1.4
+
+
+
+
+
+
 # shear in wind compnonet transcverse to propaghation direcction will change axial ratio
 # corrrected_axial_ration = np.abs()
 
 # Eckermann, S. D., & Vincent, R. A. (1989). Falling sphere observations of anisotropic gravity wave motions in the upper stratosphere over Australia. Pure and Applied Geophysics PAGEOPH, 130(2-3), 509–532. doi:10.1007/bf00874472
 
-
+# m
 vertical_wavenumber = (2 * np.pi) / u_periods
-
+vertical_wavelength = u_periods
 
 # https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency -- frequency observed in the reference frame moving with the background wind
 # Typical values are from 1.0 to 3.5
 intrinsic_frequency = f_coriolis * axial_ratio
 
+
+# [Murphy et al, 2014] -- Eqn 82
+horizontal_wavenumber = (vertical_wavenumber/mean_buoyancy_frequency)*np.sqrt(intrinsic_frequency**2 - f_coriolis**2)
+horizontal_wavelength = (2 * np.pi) / horizontal_wavenumber
+
+
+
 ## dispersion relation for low/medium-freqyuency gravity waves
-omega_squared = N**2 * (kh**2 / m**2) + f_coriolis**2
+omega_squared = mean_buoyancy_frequency**2 * (horizontal_wavenumber**2 / vertical_wavenumber**2) + f_coriolis**2
 
 
-# Eqn. 814 [Koushik et. al, 2019]
-#  gravity wave kinetic energy [J/Kg]
+# [Murphy et al, 2014] -- Eqn 2
+# averages done over vertical span of the wave
+vertical_extent_of_zonal_perturbation = np.mean((iu_wave.real[boundary_cols[0]:boundary_cols[1]])**2)
+vertical_extent_of_meridional_perturbation = np.mean((iv_wave.real[boundary_cols[0]:boundary_cols[1]])**2)
+temperature_val = np.mean(((it_wave.real[boundary_cols[0]:boundary_cols[1]]**2 / temperature[boundary_cols[0]:boundary_cols[1]])))
+
+
+# Eqn. 14 & 15 [Koushik et. al, 2019]
+#  gravity wave kinetic/potential energy density [J/Kg]
 kinetic_energy = (0.5) * (np.mean(iu_wave.real**2) + np.mean(iv_wave.real**2))
+potential_energy = (0.5) * (grav_constant**2/mean_buoyancy_frequency**2 )* temperature_val
+
+
+total_energy_of_packet =  kinetic_energy + potential_energy
+
 
 ##########################################
 
