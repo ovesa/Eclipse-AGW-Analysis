@@ -7,19 +7,16 @@ from waveletFunctions import wave_signif
 
 import pycwt as wavelet_method2
 import cmasher as cm
-import datafunctions
 from scipy.signal import hilbert
 
 plt.ion()
 
 import matplotlib
-from matplotlib import rc
 
 import plottingfunctions
 import datafunctions
 
 ################### Plotting Properties ###################
-
 
 tex_fonts = {
     "text.usetex": False,
@@ -37,11 +34,8 @@ tex_fonts = {
     "figure.facecolor": "white",
     "pcolor.shading": "auto",
 }
+
 matplotlib.rcParams.update(tex_fonts)
-
-# Set the font used for MathJax - more on this later
-rc("mathtext", **{"default": "regular"})
-
 
 ################### Read Data ###################
 
