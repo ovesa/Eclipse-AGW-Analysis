@@ -8,7 +8,6 @@ import copy
 
 import pycwt as wavelet_method2
 import cmasher as cm
-from scipy.signal import hilbert
 
 plt.ion()
   
@@ -146,7 +145,7 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
 
 ################### Wavelet Analysis ###################
 
-# padding for the end of the time series
+# padding for the ends of the time series to avoid wrap around effects
 padding = 1
 # the spacing between discrete scales
 dj = 0.01
@@ -157,6 +156,9 @@ s0 = 2 * dt
 # [Zink and Vincent, 2001] -- first order perturbations of a GW packet resembles sine wave ~ Morelet wavelet
 mother_wavelet = "MORLET" 
 
+# [Zink and Vincent, 2001] -- real part is data series band-pass filtered corresponding to scale a
+# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
+# [Zink and Vincent, 2001] -- modulus is envelope of signal
 u_coef, u_periods, u_scales, u_coi = datafunctions.compute_wavelet_components(
     u_zonal_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
 )
@@ -260,6 +262,19 @@ iu_wave = wavelet_method2.icwt(u_invert, u_scales, dt, dj, wavelet_method2.Morle
 iv_wave = wavelet_method2.icwt(v_invert, v_scales, dt, dj, wavelet_method2.Morlet(6))
 it_wave = wavelet_method2.icwt(t_invert, t_scales, dt, dj, wavelet_method2.Morlet(6))
 
+
+# [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
+# wind variance - the sum of the reconstructed u and v wavelet coefficients
+horizonatal_windvariance = (iu_wave.real) ** 2 + (iv_wave.real) ** 2
+max_horizonatal_windvariance = np.max(horizonatal_windvariance)
+FWHM_variance = np.where(horizonatal_windvariance >= 0.5*max_horizonatal_windvariance)[0]
+
+vertical_extent_coordx, vertical_extent_coordy = FWHM_variance[0],FWHM_variance[-1]
+
+iu_wave = (iu_wave)[FWHM_variance]
+iv_wave = (iv_wave)[FWHM_variance]
+it_wave = (it_wave)[FWHM_variance]
+
 ################### Hodograph Analysis ###################
 
 plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
@@ -300,7 +315,8 @@ mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
 ## Stokes parameters for gravity waves
 # Eqn. 9 from [Pfenninger et. al, 1999]
 # Hilbert transform of the meridional wind component - adds a 90 deg phase shift to vertical profile
-hilbert_v = np.imag(hilbert(iv_wave.real))
+# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
+hilbert_v = iv_wave.imag
 
 # Represent the total energy
 Stokes_I = np.mean(iu_wave.real**2) + np.mean(iv_wave.real**2)
@@ -382,7 +398,9 @@ f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia))
 U_prime = iu_wave.real * np.cos(theta) + iv_wave.real * np.sin(theta)
 
 # Hilbert transform of the temperature perturbation
-hilbert_t = np.imag(hilbert(it_wave.real))
+# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
+
+hilbert_t = it_wave.imag
 
 # sign determines direction of propagaton
 sign = U_prime * hilbert_t
@@ -461,66 +479,3 @@ potential_energy = (0.5) * (grav_constant**2/mean_buoyancy_frequency**2 )* tempe
 
 total_energy_of_packet =  kinetic_energy + potential_energy
 
-
-##########################################
-
-windVariance = np.abs(iu_wave) ** 2 + np.abs(iv_wave) ** 2
-
-uR = iu_wave.copy()[windVariance >= 0.5 * np.max(windVariance)]
-vR = iv_wave.copy()[windVariance >= 0.5 * np.max(windVariance)]
-
-uR = uR.real
-vR = vR.real
-
-
-plt.figure()
-plt.plot(uR, vR)
-plt.show()
-
-
-plt.figure()
-plt.plot(iu_wave.real, iv_wave.real)
-plt.show()
-
-
-# ##############
-# vHilbert = iv_wave.copy().imag
-# ucg = iu_wave.real
-# vcg = iv_wave.real
-# # Stokes parameters from Murphy (2014) appendix A and Eckerman (1996) equations 1-5
-# I = np.mean(ucg**2) + np.mean(vcg**2)
-# D = np.mean(ucg**2) - np.mean(vcg**2)
-# P = np.mean(2 * ucg * vcg)
-# Q = np.mean(2 * ucg * vHilbert)
-# degPolar = np.sqrt(D**2 + P**2 + Q**2) / I
-
-
-# theta = 0.5 * np.arctan2(
-#     P, D
-# )  # arctan2 has a range of [-pi, pi], as opposed to arctan's range of [-pi/2, pi/2]
-
-# uvMatrix = [
-#     ucg.copy(),
-#     vcg.copy(),
-# ]  # Combine into a matrix for easy rotation along propagation direction
-
-# # Rotate by -theta so that u and v components of 'uvMatrix' are parallel/perpendicular to propogation direction
-# rotate = [
-#     [np.cos(theta), np.sin(theta)],
-#     [-np.sin(theta), np.cos(theta)],
-# ]  # Inverse of the rotation matrix
-# uvMatrix = np.dot(rotate, uvMatrix)
-
-# # From Murphy (2014) table 1, and Zink & Vincent (2001) equation A10
-# axialRatio = np.linalg.norm(uvMatrix[0]) / np.linalg.norm(uvMatrix[1])
-
-
-# # From Murphy (2014), citing Zink (2000) equation 3.17
-# # This is the coherence function, measuring the coherence of U|| and T
-# gamma = np.mean(uvMatrix[0] * np.conj(it_wave.real)) / np.sqrt(
-#     np.mean(np.abs(uvMatrix[0]) ** 2) * np.mean(np.abs(it_wave.real) ** 2)
-# )
-
-
-# # Vertical wavenumber [1/m]
-# m = 2 * np.pi / u_periods
