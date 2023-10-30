@@ -294,7 +294,7 @@ plt.show()
 grav_constant = 9.81  # gravity [m/s^2]
 ps = 1000  # standard pressure [hPa] -- equal to 1 millibar
 kappa = 2 / 7 # Poisson constant for dry air 
-celsius_to_kelvin_conversion = 273.15 # 0 Celsium == 273.15 K
+celsius_to_kelvin_conversion = 273.15 # 0 deg Celsius == 273.15 K
 
 # Convert temperature array from Celsium to Kelvin
 temperature_K =  (choose_data_frame_analyze["T [°C]"] + celsius_to_kelvin_conversion)
@@ -309,11 +309,14 @@ potential_temperature = (
 # Mean buoyancy frequency -- describs the stability of the region
 # Eqn. 4 from [Pfenninger et. al, 1999]
 mean_buoyancy_frequency = np.sqrt(
-    grav_constant * potential_temperature * np.gradient(potential_temperature, spatial_resolution)
-)
+    (grav_constant/ potential_temperature) * np.gradient(potential_temperature, spatial_resolution)
+) # [Hz]
+
+
 # need to average over the vertical extent of the wave
 
-mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency
+# Mean buoyancy period
+mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
 
 
 ## Stokes parameters for gravity waves
