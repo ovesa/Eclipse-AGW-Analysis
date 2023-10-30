@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from waveletFunctions import wave_signif
+import copy
 
 import pycwt as wavelet_method2
 import cmasher as cm
@@ -39,7 +40,9 @@ matplotlib.rcParams.update(tex_fonts)
 
 ################### Read Data ###################
 
+# path to data
 path = "/media/oana/Data1/Annular_Eclipse_Analysis/Data/"
+# Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
 file_nom = -1
@@ -65,12 +68,16 @@ print("\n")
 
 ################### Preprocess and Interpolate Data ###################
 
+# tropopause height [m]
+tropopause_height = 12000 
 
-tropopause_height = 12000  # [m]
+# to give a rise rate of 5 m/s
+spatial_resolution = 5 
 
-spatial_resolution = 5
-
-interpolation_limit = 1000  # spatial height [m]
+# spatial height interpolation limit [m]
+# Tells code to not interpolate if there are more than [interpolation_limit] consecutive rows of missing/ NaN values
+# Interpolation starts anew after hitting the interpolation limit
+interpolation_limit = 1000
 
 dat = datafunctions.clean_data(dat, tropopause_height, original_data_shape)
 
@@ -81,7 +88,6 @@ data_sections = datafunctions.check_data_for_interpolation_limit_set(
 )
 
 dat = datafunctions.set_spatial_resolution_for_data(data_sections, spatial_resolution)
-
 
 ################### Zonal & Meridional Components of Wind Speed ###################
 
@@ -107,7 +113,6 @@ u_zonal_fit = datafunctions.compute_second_order_polynomial_fits(
 temperature_fit = datafunctions.compute_second_order_polynomial_fits(
     choose_data_frame_analyze, temperature, 2
 )
-
 
 u_zonal_perturbations = datafunctions.derive_first_order_perturbations(
     choose_data_frame_analyze, u_zonal_speed, u_zonal_fit
@@ -140,13 +145,11 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
 
 ################### Wavelet Analysis ###################
 
-
 padding = 1
 dj = 0.01
 dt = spatial_resolution
 s0 = 2 * dt
 mother_wavelet = "MORLET"
-
 
 u_coef, u_periods, u_scales, u_coi = datafunctions.compute_wavelet_components(
     u_zonal_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
@@ -158,9 +161,8 @@ t_coef, t_periods, t_scales, t_coi = datafunctions.compute_wavelet_components(
     temperature_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
 )
 
-
-# Power surface is sum of squares of u and v wavelet transformed surfaces
-# [Koushik et al, 2019] S(a,z) = abs( U(a,z) )^2  + abs(  V(a,z) )^2, a = vertical wavelength, z = height
+# [Koushik et al, 2019] -- Power surface is sum of squares of the U and V wavelet transformed surfaces
+# S(a,z) = abs(U(a,z))^2  + abs(V(a,z))^2; a = vertical wavelength, z = height
 power = abs(u_coef) ** 2 + abs(v_coef) ** 2
 
 # Calculate the significance of the wavelet coefficients
@@ -185,12 +187,10 @@ signif = wave_signif(
     lag1=alpha_v,
 )
 
-
 # Turn 1D array into a 2D array matching shape of power surface array for direct comparison
 signif = np.ones([1, choose_data_frame_analyze.shape[0]]) * signif[:, None]
 # Create boolean mask that is True where power is significant and False otherwise
 signif = power > signif
-
 
 # Turn 1D array into a 2D array matching shape of power surface array for direct comparison
 # I assume that the cone of influence should match the wave significance array in using both zonal and meridional wavelet coefficient perturbations
@@ -201,7 +201,6 @@ coiMask = np.array(
     ]
 ).T
 
-
 ################### Find Local Maxima & Extract Boundaries Around Gravity Wave Packet ###################
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
@@ -209,9 +208,7 @@ peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 peak_nom = 0
 peak_containers = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
-
 ################### Plot Power Surface ###################
-
 
 colormap = cm.chroma
 
@@ -231,32 +228,31 @@ plottingfunctions.plot_power_surface(
 
 ################### Inverse Wavelet Transform ###################
 
-# [Zink and Vincent, 2001] Reconstruct zonal and meridional perturbations associated with the gravity wave packet
-# by using the inverse wavelet transform of the wavelet coefficients
-# Centered within the boundary
-u_invert = u_coef.copy()
+# [Zink and Vincent, 2001] -- Reconstruct zonal and meridional perturbations associated with the gravity wave packet 
+# by using the inverse wavelet transform of the wavelet coefficients centered within the boundary
+# Make everything outside of the rectangular boundary 0
+
+u_invert = copy.deepcopy(u_coef)
 u_invert[~(peak_containers)] = 0
 
-v_invert = v_coef.copy()
+v_invert = copy.deepcopy(v_coef)
 v_invert[~(peak_containers)] = 0
 
-t_invert = t_coef.copy()
+t_invert = copy.deepcopy(t_coef)
 t_invert[~(peak_containers)] = 0
 
 
 # Inverse wavelet transform
-# Want to use the same parameters that you used in calculating the wavelet coefficients
+# Want to use the exact parameters used in the initial calculation of the wavelet coefficients
 iu_wave = wavelet_method2.icwt(u_invert, u_scales, dt, dj, wavelet_method2.Morlet(6))
 iv_wave = wavelet_method2.icwt(v_invert, v_scales, dt, dj, wavelet_method2.Morlet(6))
 it_wave = wavelet_method2.icwt(t_invert, t_scales, dt, dj, wavelet_method2.Morlet(6))
 
 ################### Hodograph Analysis ###################
 
-
 fig = plt.figure(figsize=[5, 4])
 
 plt.plot(iu_wave.real, iv_wave.real, color="k", linewidth=1.5)
-
 
 plt.scatter(
     iu_wave.real[0],

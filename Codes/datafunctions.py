@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 import tqdm as tqdm
-import matplotlib.pyplot as plt
+import copy
 from scipy.signal import argrelmin
 from waveletFunctions import wavelet
 from skimage.feature import peak_local_max
@@ -184,7 +184,7 @@ def interpolate_data(dataframe, interpolation_limit):
     # Solution: interpolate the data and then apply a mask to reset the interpolation limit gap to NaN values
 
     # Create a mask of the orginal DataFrame
-    interpolation_mask = dataframe.copy()
+    interpolation_mask = copy.deepcopy(dataframe)
 
     # New DataFrame where every value ascends by 1
     intermediate_mask = (
@@ -497,10 +497,10 @@ def find_local_maxima(power_array, threshold_val, coi, sig):
     peaks = peak_local_max(power_array, threshold_abs=threshold_val)
 
     # filter local maxima within cone of influence and significance interval
-    coi_mask = coi.copy()
+    coi_mask = copy.deepcopycoi
     peaks = peaks[[coi_mask[tuple(x)] for x in peaks]]
 
-    sig_mask = sig.copy()
+    sig_mask = copy.deepcopy(sig)
     peaks = peaks[[sig_mask[tuple(x)] for x in peaks]]
 
     print("Found %s peaks within cone of influence & siugnificance" % (peaks.shape[0]))
