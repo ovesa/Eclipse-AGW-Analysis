@@ -192,13 +192,14 @@ signif = wave_signif(
 )
 
 
-# Turn 1D array into a 2D array for direct comparison with power surface
+# Turn 1D array into a 2D array matching shape of power surface array for direct comparison
 signif = np.ones([1, choose_data_frame_analyze.shape[0]]) * signif[:, None]
 # Create boolean mask that is True where power is significant and False otherwise
 signif = power > signif
 
 
-# Turn 1D array into a 2D array for direct comparison with power surface
+# Turn 1D array into a 2D array matching shape of power surface array for direct comparison
+# I assume that the cone of influence should match the wave significance array in using both zonal and meridional wavelet coefficient perturbations
 coiMask = np.array(
     [
         np.array(u_periods + v_periods) <= (u_coi[i] + v_coi[i])
@@ -231,7 +232,7 @@ plottingfunctions.plot_power_surface(
     colormap,
     starting_time_for_flight,
     "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/Power_Surfaces",
-    save_fig=True,
+    save_fig=False,
 )
 
 ################### Inverse Wavelet Transform ###################
