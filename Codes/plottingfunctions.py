@@ -324,12 +324,12 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
         color="r",
         marker="o",
         s=35,
-        zorder=1, edgecolor='k',
+        zorder=1, edgecolor='k'
     )
 
     plt.annotate(
         "%.1f km" % (dataframe["Geopot [m]"].iloc[0] / 1000),
-        (zonal_wind_perturbation[0], meridional_wind_perturbation[0]),
+        (zonal_wind_perturbation[0], meridional_wind_perturbation[0]),bbox=dict(boxstyle="square",pad=0.3,fc="w")
     )
 
     plt.scatter(
@@ -343,7 +343,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
 
     plt.annotate(
         "%.1f km" % (dataframe["Geopot [m]"].iloc[-1] / 1000),
-        (zonal_wind_perturbation[-1], meridional_wind_perturbation[-1]),
+        (zonal_wind_perturbation[-1], meridional_wind_perturbation[-1]),bbox=dict(boxstyle="square",pad=0.3,fc="w")
     )
 
     plt.xlabel("Zonal Wind Speed [m/s]")

@@ -213,14 +213,14 @@ coiMask = np.array(
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 0
+peak_nom = 3
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
 associated_height_range_of_boundary =  choose_data_frame_analyze["Geopot [m]"].iloc[boundary_cols] # m
 
-associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[peak_nom[1]]] # m
-associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom[1]]] # TimeStamp [UTC]
+associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[peak_nom][1]] # m
+associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom][1]] # TimeStamp [UTC]
 
 ################### Plot Power Surface ###################
 
@@ -246,39 +246,49 @@ plottingfunctions.plot_power_surface(
 # by using the inverse wavelet transform of the wavelet coefficients centered within the boundary
 # Make everything outside of the rectangular boundary 0
 
-u_invert = copy.deepcopy(u_coef)
-u_invert[~(peak_containers)] = 0
+u_inverted_coeff = copy.deepcopy(u_coef)
+u_inverted_coeff = u_inverted_coeff*peak_containers
 
-v_invert = copy.deepcopy(v_coef)
-v_invert[~(peak_containers)] = 0
+v_inverted_coeff = copy.deepcopy(v_coef)
+v_inverted_coeff  = v_inverted_coeff*peak_containers
 
-t_invert = copy.deepcopy(t_coef)
-t_invert[~(peak_containers)] = 0
+t_inverted_coeff = copy.deepcopy(t_coef)
+t_inverted_coeff = t_inverted_coeff*peak_containers
 
 
 # Inverse wavelet transform
 # Want to use the exact parameters used in the initial calculation of the wavelet coefficients
-iu_wave = wavelet_method2.icwt(u_invert, u_scales, dt, dj, wavelet_method2.Morlet(6))
-iv_wave = wavelet_method2.icwt(v_invert, v_scales, dt, dj, wavelet_method2.Morlet(6))
-it_wave = wavelet_method2.icwt(t_invert, t_scales, dt, dj, wavelet_method2.Morlet(6))
+# [Torrence and Compo, 1998] Eqn 11
 
+u_div_scale = np.divide(u_inverted_coeff.T,np.sqrt(u_scales))
+v_div_scale= np.divide(v_inverted_coeff.T,np.sqrt(v_scales))
+t_div_scale = np.divide(t_inverted_coeff.T,np.sqrt(t_scales))
+
+# [Torrence and Compo, 1998] Table 2
+C_delta_morlet = 0.776 #  reconstruction factor
+psi0_morlet = np.pi**(1/4) # to remove energy scaling
+wavelet_constant = dj*np.sqrt(dt)/ (C_delta_morlet*psi0_morlet)
+
+u_inverted_coeff = np.multiply(u_div_scale.sum(axis=0),wavelet_constant)
+v_inverted_coeff = np.multiply(v_div_scale.sum(axis=0),wavelet_constant)
+t_inverted_coeff = np.multiply(t_div_scale.sum(axis=0),wavelet_constant)
 
 # [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
 # wind variance - the sum of the reconstructed u and v wavelet coefficients
-horizonatal_windvariance = (iu_wave.real) ** 2 + (iv_wave.real) ** 2
+horizonatal_windvariance = np.abs(u_inverted_coeff) ** 2 + np.abs(v_inverted_coeff) ** 2
 max_horizonatal_windvariance = np.max(horizonatal_windvariance)
 FWHM_variance = np.where(horizonatal_windvariance >= 0.5*max_horizonatal_windvariance)[0]
 
 vertical_extent_coordx, vertical_extent_coordy = FWHM_variance[0],FWHM_variance[-1]
 
-iu_wave = (iu_wave)[FWHM_variance]
-iv_wave = (iv_wave)[FWHM_variance]
-it_wave = (it_wave)[FWHM_variance]
+iu_wave = (u_inverted_coeff)[FWHM_variance]
+iv_wave = (v_inverted_coeff)[FWHM_variance]
+it_wave = (t_inverted_coeff)[FWHM_variance]
 
 ################### Hodograph Analysis ###################
 
 plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
-plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
+# plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave, iv_wave,choose_data_frame_analyze)
 
 ################### Extracting Wave Parameters ###################
 
