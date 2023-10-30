@@ -213,7 +213,7 @@ coiMask = np.array(
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 7
+peak_nom = 8
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
@@ -356,7 +356,7 @@ else:
 polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
 
 
-# [Yoo et al, 2018: https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018JD029164]
+# [Yoo et al, 2018]
 if 0.5 <= polarization_factor < 1:
     print("d=%.2f -- Most likely an AGW"%polarization_factor)
 elif polarization_factor == 1:
@@ -366,8 +366,8 @@ elif polarization_factor == 0:
 else:
     print("d=%.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
 
-# [Koushik et. al, 2019]  -- stokes p and q less than threshodl value are not agws
-if np.abs(Stokes_P) < 0.5 or np.abs(Stokes_Q) < 0.5:
+# [Koushik et. al, 2019]  -- stokes p and q less than threshold value might not be not agws
+if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
     print("Might not be an AGW; representative of poor wave activity")
 
 
@@ -423,13 +423,13 @@ theta_deg = np.rad2deg(theta)
 # coherencey, correlated power between U and V
 C = np.sqrt((Stokes_P**2 + Stokes_Q**2) / (Stokes_I**2 - Stokes_D**2))
 
-# https://scipython.com/book/chapter-6-numpy/examples/creating-a-rotation-matrix-in-numpy/
-rotation_matrix = np.array(
-    ((np.cos(theta), -np.sin(theta)), (np.sin(theta), np.cos(theta)))
-)
-wind_matrix = np.array([iu_wave, iv_wave])
-wind_matrix = np.dot(rotation_matrix, wind_matrix)
-axial_ration2 = np.linalg.norm(wind_matrix[0]) / np.linalg.norm(wind_matrix[1])
+# # https://scipython.com/book/chapter-6-numpy/examples/creating-a-rotation-matrix-in-numpy/
+# rotation_matrix = np.array(
+#     ((np.cos(theta), -np.sin(theta)), (np.sin(theta), np.cos(theta)))
+# )
+# wind_matrix = np.array([iu_wave.real, iv_wave.real])
+# wind_matrix = np.dot(rotation_matrix, wind_matrix)
+# axial_ration2 = np.linalg.norm(wind_matrix[0]) / np.linalg.norm(wind_matrix[1])
 
 
 # axial ratio -- ratio of the minor axis to the maxjor axis; aspect ratio of the polarization ellipse
@@ -437,9 +437,9 @@ axial_ration2 = np.linalg.norm(wind_matrix[0]) / np.linalg.norm(wind_matrix[1])
 eta = (0.5) * np.arcsin(
     Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q**2)
 )
-# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018JD029164
-axial_ratio = 1 / np.tan(eta)
-
+# [Yoo et al, 2018] -- Eqn 6 & 7
+axial_ratio = np.tan(eta)
+inverse_axialratio = 1/ axial_ratio
 
 
 # [Koushik et. al, 2019] -- typical values of axial ratios [1.0, 3.5]; median: 1.4

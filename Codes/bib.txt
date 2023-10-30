@@ -48,6 +48,9 @@ Journals:
 
 [Yoo et al, 2018] -- https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018JD029164
 
+[Murphy et al, 2014] -- https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448
+
+
 check out:
 
 https://amt.copernicus.org/articles/13/479/2020/amt-13-479-2020.pdf
