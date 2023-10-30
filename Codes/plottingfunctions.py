@@ -262,10 +262,10 @@ def plot_potential_temperature_vs_pressure(potential_temperature_array, temperat
     Returns:
         A figure
     """
-    
+
     fig = plt.figure()
-    plt.plot(potential_temperature_array, pressure_array, label="Potential Temperature [K]")
-    plt.plot(temperature_array, pressure_array, label="Temperature [K]")
+    plt.plot(potential_temperature_array, pressure_array, color='k', label="Potential Temperature [K]")
+    plt.plot(temperature_array, pressure_array, color='k', linestyle='--', label="Temperature [K]")
 
     plt.gca().invert_yaxis()
     plt.xlabel("Temperature [K]")
