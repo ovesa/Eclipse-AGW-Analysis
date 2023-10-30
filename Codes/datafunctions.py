@@ -497,7 +497,7 @@ def find_local_maxima(power_array, threshold_val, coi, sig):
     peaks = peak_local_max(power_array, threshold_abs=threshold_val)
 
     # filter local maxima within cone of influence and significance interval
-    coi_mask = copy.deepcopycoi
+    coi_mask = copy.deepcopy(coi)
     peaks = peaks[[coi_mask[tuple(x)] for x in peaks]]
 
     sig_mask = copy.deepcopy(sig)
