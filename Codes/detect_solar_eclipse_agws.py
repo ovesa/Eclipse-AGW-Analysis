@@ -296,6 +296,7 @@ ps = 1000  # standard pressure [hPa] -- equal to 1 millibar
 kappa = 2 / 7 # Poisson constant for dry air 
 celsius_to_kelvin_conversion = 273.15 # 0 Celsium == 273.15 K
 
+# Convert temperature array from Celsium to Kelvin
 temperature_K =  (choose_data_frame_analyze["T [°C]"] + celsius_to_kelvin_conversion)
 
 # Potential temperature -- temperature a parcel of air would have if moved adiabatically (no heat exchange)

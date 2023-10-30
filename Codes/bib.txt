@@ -14,7 +14,7 @@ https://slideplayer.com/slide/8175190/
 Potential Temperature:
 https://www.aoml.noaa.gov/ftp/hrd/annane/prelim_notes/Potential_Temperature.pdf
 https://glossary.ametsoc.org/wiki/Potential_temperature
-
+http://weatherclimatelab.mit.edu/wp-content/uploads/2018/02/Potential-temperature.pdf
 
 
 Python Related Websites:
