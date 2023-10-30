@@ -320,8 +320,8 @@ mean_buoyancy_frequency = np.sqrt(
     (grav_constant/ potential_temperature) * np.gradient(potential_temperature, spatial_resolution)
 ) # [Hz]
 
-
-# need to average over the vertical extent of the wave
+# average over boundary which wave was detected
+mean_buoyancy_frequency = mean_buoyancy_frequency[boundary_cols[0]:boundary_cols[1]].mean(skipna=True) # [Hz]
 
 # Mean buoyancy period
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
