@@ -559,7 +559,9 @@ def convert_seconds_to_timestamp(dataframe, initial_timestamp_for_flight):
         initial_timestamp_for_flight -- The intial timestamp for the flight [Timestamp]
 
     Returns:
-        A new time column in UTC.
+        A new time column in UTC. Moved new column to be the 2nd column in DataFrame.
     """    
     dataframe["Time [UTC]"] = pd.to_datetime(dataframe["Time [sec]"], unit='s', origin=str(initial_timestamp_for_flight))
+    column_to_move =  dataframe.pop("Time [UTC]")
+    dataframe.insert(1, "Time [UTC]", column_to_move )
     return dataframe
