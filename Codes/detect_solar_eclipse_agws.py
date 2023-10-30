@@ -11,7 +11,7 @@ import cmasher as cm
 from scipy.signal import hilbert
 
 plt.ion()
-
+  
 import matplotlib
 
 import plottingfunctions
@@ -150,7 +150,8 @@ padding = 1
 dj = 0.01
 dt = spatial_resolution
 s0 = 2 * dt
-mother_wavelet = "MORLET"
+# [Zink and Vincent, 2001] -- first order perturbations of a GW packet resembles sine wave ~ Morelet wavelet
+mother_wavelet = "MORLET" 
 
 u_coef, u_periods, u_scales, u_coi = datafunctions.compute_wavelet_components(
     u_zonal_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
@@ -257,44 +258,8 @@ it_wave = wavelet_method2.icwt(t_invert, t_scales, dt, dj, wavelet_method2.Morle
 
 ################### Hodograph Analysis ###################
 
-fig = plt.figure(figsize=[5, 4])
-
-plt.plot(iu_wave.real, iv_wave.real, color="k", linewidth=1.5,zorder=0)
-
-plt.scatter(
-    iu_wave.real[0],
-    iv_wave.real[0],
-    color="r",
-    marker="o",
-    s=35,
-    zorder=1, edgecolor='k',
-)
-
-plt.annotate(
-    "%.1f km" % (choose_data_frame_analyze["Geopot [m]"].iloc[0] / 1000),
-    (iu_wave.real[0], iv_wave.real[0]),
-)
-
-plt.scatter(
-    iu_wave.real[-1],
-    iv_wave.real[-1],
-    color="gold",
-    marker="o",
-    s=35,
-    zorder=1, edgecolor='k',
-)
-
-plt.annotate(
-    "%.1f km" % (choose_data_frame_analyze["Geopot [m]"].iloc[-1] / 1000),
-    (iu_wave.real[-1], iv_wave.real[-1]),
-)
-
-plt.xlabel("Zonal Wind Speed [m/s]")
-plt.ylabel("Meridional Wind Speed [m/s]")
-
-plt.tight_layout()
-plt.show()
-
+plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
+plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
 
 ################### Extracting Wave Parameters ###################
 
@@ -356,16 +321,16 @@ polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_
 
 
 # [Yoo et al, 2018: https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018JD029164]
-if polarization_factor == 1:
-    print("Monochromatic Wave")
-elif polarization_factor == 0:
-    print("Not an AGW; no polarization relationship")
-
-# [Yoo et al, 2018: https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/2018JD029164]
 if 0.5 <= polarization_factor < 1:
-    print("Most likely an AGW")
+    print("d=%.2f -- Most likely an AGW"%polarization_factor)
+elif polarization_factor == 1:
+    print("d=%.2f -- Monochromatic Wave"%polarization_factor)
+elif polarization_factor == 0:
+    print("d=%.2f -- Not an AGW; no polarization relationship"%polarization_factor)
 else:
-    print("Might not be an AGW. Polarization factor too low")
+    print("d=%.2f -- Might not be an AGW. Polarization factor too low"%polarization_factor)
+
+
 
 # dynamic shear instability -- Richardson Number
 # richardson_number = mean_buoyancy_frequency**2 / ((du / dz) ** 2 + (dv / dz) ** 2)
