@@ -546,7 +546,8 @@ def extract_boundaries_around_peak(power_array, peaks, peak_nom):
 
     # The area pertaining to the boundary of the identified AGW packet is set as True.
     peak_containers[row_coords[:, np.newaxis], col_coords] = True
-    return peak_containers
+
+    return peak_containers,[row_coords[0],row_coords[-1]], [col_coords[0],col_coords[-1]]
 
 
 

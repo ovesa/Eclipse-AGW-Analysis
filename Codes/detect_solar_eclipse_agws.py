@@ -207,7 +207,7 @@ coiMask = np.array(
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
 peak_nom = 0
-peak_containers = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
+peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 ################### Plot Power Surface ###################
 
