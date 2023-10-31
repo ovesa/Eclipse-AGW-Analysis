@@ -151,7 +151,7 @@ def plot_power_surface(
     periods,
     peak_container,
     signif,
-    coi,
+    coi,coi_1d,
     peaks,
     colormap,
     time,
@@ -216,6 +216,15 @@ def plot_power_surface(
         colors="black",
         levels=[0.5],
     )
+    
+    ax.contourf(
+        height_km,
+        periods / 1000,
+        ~coi,
+        colors="none",
+        levels=[0.5,1],hatches = ['x']
+    )
+
     ax.scatter(
         height_km[peaks.T[1]],
         periods[peaks.T[0]] / 1000,
@@ -230,6 +239,7 @@ def plot_power_surface(
         colors="r",
         levels=[0.5],
     )
+
 
     ax.set_yscale("log")
 

@@ -62,7 +62,8 @@ dat = datafunctions.read_grawmet_profile(fname[file_nom])
 ) = datafunctions.grab_initial_grawmet_profile_parameters(dat)
 
 print("\n")
-print("Information about datasheet:")
+print("Information about data:")
+print("\n")
 print("Time range: [%s, %s] UTC" % (starting_time_for_flight,ending_time_for_flight))
 print("Altitude range: [%s, %s] m" % (original_min_altitude,original_max_altitude))
 print("\n")
@@ -128,7 +129,6 @@ v_meridional_perturbations = datafunctions.derive_first_order_perturbations(
 temperature_perturbations = datafunctions.derive_first_order_perturbations(
     choose_data_frame_analyze, temperature, temperature_fit
 )
-
 
 plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     choose_data_frame_analyze["Geopot [m]"],
@@ -212,6 +212,8 @@ coiMask = np.array(
     ]
 ).T
 
+coi_1d =  v_coi #+ u_coi
+
 ################### Find Local Maxima & Extract Boundaries Around Gravity Wave Packet ###################
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
@@ -235,11 +237,11 @@ plottingfunctions.plot_power_surface(
     u_periods,
     peak_containers,
     signif,
-    coiMask,
+    coiMask,coi_1d,
     peaks,
     colormap,
     starting_time_for_flight,
-    "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/Power_Surfaces",
+    path_to_save_figures + "/Power_Surfaces/",
     save_fig=False,
 )
 
