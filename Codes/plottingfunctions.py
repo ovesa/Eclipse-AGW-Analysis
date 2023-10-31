@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
 def plot_vertical_profiles_with_residual_perturbations(
-    dataframe,
+    height,
     u_zonal_speed,
     v_meridional_speed,
     temperature,
@@ -49,13 +49,13 @@ def plot_vertical_profiles_with_residual_perturbations(
 
     fig.suptitle(str(time) + " UTC")
 
-    axs[0, 0].plot(u_zonal_speed, dataframe["Geopot [m]"], color="navy", linewidth=1)
+    axs[0, 0].plot(u_zonal_speed,height, color="navy", linewidth=1)
 
     axs[0, 0].plot(
-        u_zonal_fit[0] * dataframe["Geopot [m]"] ** 2
-        + u_zonal_fit[1] * dataframe["Geopot [m]"]
+        u_zonal_fit[0] * height ** 2
+        + u_zonal_fit[1] * height
         + u_zonal_fit[2] * np.ones(len(u_zonal_speed)),
-        dataframe["Geopot [m]"],
+        height,
         color="k",
         linestyle="--",
         linewidth=1.5,
@@ -65,7 +65,7 @@ def plot_vertical_profiles_with_residual_perturbations(
     axs[0, 0].set_xlabel("Zonal Speed [m/s]")
 
     axs[0, 1].plot(
-        u_zonal_perturbations, dataframe["Geopot [m]"], color="navy", linewidth=1
+        u_zonal_perturbations, height, color="navy", linewidth=1
     )
 
     axs[0, 1].axvline(x=0, color="k", linestyle="--", linewidth=1.5)
@@ -74,16 +74,16 @@ def plot_vertical_profiles_with_residual_perturbations(
     axs[0, 1].set_title("Residual Perturbations")
 
     axs[1, 0].plot(
-        v_meridional_speed, dataframe["Geopot [m]"], color="navy", linewidth=1
+        v_meridional_speed, height, color="navy", linewidth=1
     )
 
     axs[1, 0].plot(
         (
-            v_meridional_fit[0] * dataframe["Geopot [m]"] ** 2
-            + v_meridional_fit[1] * dataframe["Geopot [m]"]
+            v_meridional_fit[0] * height ** 2
+            + v_meridional_fit[1] * height
             + v_meridional_fit[2] * np.ones(len(v_meridional_speed))
         ),
-        dataframe["Geopot [m]"],
+        height,
         color="k",
         linestyle="--",
         linewidth=1.5,
@@ -92,20 +92,20 @@ def plot_vertical_profiles_with_residual_perturbations(
     axs[1, 0].set_xlabel("Meridional Speed [m/s]")
 
     axs[1, 1].plot(
-        v_meridional_perturbations, dataframe["Geopot [m]"], color="navy", linewidth=1
+        v_meridional_perturbations, height, color="navy", linewidth=1
     )
     axs[1, 1].axvline(x=0, color="k", linestyle="--", linewidth=1.5)
     axs[1, 1].set_xlabel("Residual [m/s]")
 
-    axs[2, 0].plot(temperature, dataframe["Geopot [m]"], color="navy", linewidth=1)
+    axs[2, 0].plot(temperature, height, color="navy", linewidth=1)
 
     axs[2, 0].plot(
         (
-            temperature_fit[0] * dataframe["Geopot [m]"] ** 2
-            + temperature_fit[1] * dataframe["Geopot [m]"]
+            temperature_fit[0] * height ** 2
+            + temperature_fit[1] * height
             + temperature_fit[2] * np.ones(len(temperature))
         ),
-        dataframe["Geopot [m]"],
+        height,
         color="k",
         linestyle="--",
         linewidth=1.5,
@@ -114,7 +114,7 @@ def plot_vertical_profiles_with_residual_perturbations(
     axs[2, 0].set_xlabel("Temperature [C]")
 
     axs[2, 1].plot(
-        temperature_perturbations, dataframe["Geopot [m]"], color="navy", linewidth=1
+        temperature_perturbations, height, color="navy", linewidth=1
     )
 
     axs[2, 1].axvline(x=0, color="k", linestyle="--", linewidth=1.5)
@@ -122,7 +122,7 @@ def plot_vertical_profiles_with_residual_perturbations(
     axs[2, 1].set_xlabel("Residual [s]")
 
     for ax in [axs[0, 0], axs[1, 0], axs[2, 0]]:
-        ax.set(ylabel="Altitude [m]")
+        ax.set(ylabel="Altitude [km]")
         ax.xaxis.set_minor_locator(AutoMinorLocator(4))
         ax.yaxis.set_minor_locator(AutoMinorLocator(4))
 
