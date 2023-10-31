@@ -189,10 +189,10 @@ def plot_power_surface(
         (periods) / 1000,
         (power_array),
         levels=200,
-        cmap=colormap,vmax=9
+        cmap=colormap,vmin=0,vmax=9
     )
     cb = plt.colorbar()
-    cb.set_label("Power [m^$2$/s^$2$]")
+    cb.set_label(r"Power [m$^2$/s$^2$]")
 
     plt.contour(
         height_km,
@@ -224,6 +224,7 @@ def plot_power_surface(
         marker=".",
     )
 
+
     plt.yscale("log")
 
     plt.xlim(
@@ -237,8 +238,7 @@ def plot_power_surface(
     plt.ylabel("Vertical Wavelength [km]")
     plt.xlabel("Altitude [km]")
 
-    plt.axes().yaxis.set_minor_locator(MultipleLocator(5))
-    plt.axes().xaxis.set_minor_locator(MultipleLocator(5))
+
 
     plt.title("Power Surface at " + str(time) + " UTC")
     plt.tight_layout()

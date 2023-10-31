@@ -355,9 +355,9 @@ def compute_second_order_polynomial_fits(dataframe, array, order):
 def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
     """
     Derive the first-order perturbations, which are thought to caused by atmospheric gravity waves
-    [Moffat‐Griffin et. al, 2011]. After computing the least squares polynomial fit for the
+    [Moffat-Griffin et. al, 2011]. After computing the least squares polynomial fit for the
     perturbation (specifically the zonal and meridional wind perturbations), subtract it from the
-    original vertical profiles. This removes the background pertubations [Moffat‐Griffin et. al, 2011]
+    original vertical profiles. This removes the background pertubations [Moffat-Griffin et. al, 2011]
     & [Vincent and Alexander, 2000].
 
     Arguments:
@@ -503,7 +503,7 @@ def find_local_maxima(power_array, threshold_val, coi, sig):
     sig_mask = copy.deepcopy(sig)
     peaks = peaks[[sig_mask[tuple(x)] for x in peaks]]
 
-    print("Found %s peaks within cone of influence & siugnificance" % (peaks.shape[0]))
+    print("Found %s peaks within cone of influence & significance" % (peaks.shape[0]))
     return peaks
 
 

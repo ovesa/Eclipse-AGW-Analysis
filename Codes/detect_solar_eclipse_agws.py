@@ -230,7 +230,7 @@ associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[pea
 colormap = cm.eclipse
 
 plottingfunctions.plot_power_surface(
-    choose_data_frame_analyze,
+    choose_data_frame_analyze["Geopot [m]"]/1000,
     power,
     u_periods,
     peak_containers,
