@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 import copy
 
 def plot_vertical_profiles_with_residual_perturbations(
@@ -124,8 +123,9 @@ def plot_vertical_profiles_with_residual_perturbations(
 
     for ax in [axs[0, 0], axs[1, 0], axs[2, 0]]:
         ax.set(ylabel="Altitude [m]")
-        ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-        ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+        ax.yaxis.get_ticklocs(minor=True)
+        ax.xaxis.get_ticklocs(minor=True)
+        ax.minorticks_on()
 
 
     plt.tight_layout()
@@ -179,33 +179,27 @@ def plot_power_surface(
     Returns:
         Plots the power surface with the local maxima identified.
     """
-    power_array = np.log(copy.deepcopy(power_array))
-    power_array[power_array < 0] = 0
+    copied_power_array = np.log(copy.deepcopy(power_array))
+    copied_power_array[copied_power_array < 0] = 0
 
-    fig, ax = plt.subplots(figsize=[8, 6])
+    fig, ax = plt.subplots(1,1,figsize=[8, 6])
     
-    im =ax.contourf(
+    im = ax.contourf(
         height_km,
         (periods) / 1000,
-        (power_array),
+        (copied_power_array),
         levels=200,
         cmap=colormap,vmin=0,vmax=9
     )
+    
     ax.yaxis.get_ticklocs(minor=True)
     ax.xaxis.get_ticklocs(minor=True)
 
     ax.minorticks_on()
     
-    cb = fig.colorbar(im, cax=ax)
-    cb.set_label(r"Power [m$^2$/s$^2$]")
+    cb = fig.colorbar(im, ax=ax)
+    cb.ax.set_ylabel("Power [m$^2$/s$^2$]")
 
-    ax.contour(
-        height_km,
-        periods / 1000,
-        peak_container,
-        colors="r",
-        levels=[0.5],
-    )
 
     ax.contour(
         height_km,
@@ -225,12 +219,19 @@ def plot_power_surface(
     ax.scatter(
         height_km[peaks.T[1]],
         periods[peaks.T[0]] / 1000,
-        c="red",
-        marker=".",
+        c="red",s=50,
+        marker=".", edgecolor='k'
+    )
+    
+    ax.contour(
+        height_km,
+        periods / 1000,
+        peak_container,
+        colors="r",
+        levels=[0.5],
     )
 
-
-    ax.set_scale("log")
+    ax.set_yscale("log")
 
     ax.set_xlim(
         [
@@ -238,12 +239,9 @@ def plot_power_surface(
             height_km.max(),
         ]
     )
-    #
 
     ax.set_ylabel("Vertical Wavelength [km]")
     ax.set_xlabel("Altitude [km]")
-
-
 
     ax.set_title("Power Surface at " + str(time) + " UTC")
     plt.tight_layout()
