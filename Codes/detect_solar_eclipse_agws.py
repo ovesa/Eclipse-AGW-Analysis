@@ -284,6 +284,7 @@ FWHM_variance = np.where(horizonatal_windvariance >= 0.5*max_horizonatal_windvar
 
 vertical_extent_coordx, vertical_extent_coordy = FWHM_variance[0],FWHM_variance[-1]
 
+# The reconstructed wind and temperature paramters based on the full width half max
 iu_wave = (u_inverted_coeff)[FWHM_variance]
 iv_wave = (v_inverted_coeff)[FWHM_variance]
 it_wave = (t_inverted_coeff)[FWHM_variance]
@@ -344,10 +345,12 @@ Stokes_Q = 2 * np.mean(iu_wave.real * hilbert_v)
 # [Pfenninger et. al, 1999] -- think of Stokes Q as the energy difference betwen propagating AGWs
 # [Koushik et. al, 2019] -- Stokes  Q -- sense of rotation of th[boundary_cols[0]:boundary_cols[1]]e polarizaition ellipse
 if Stokes_Q > 0:
+    print("\n")
     print("Wave energy propagating upward")
     print("Clockwise rotation of the polarized ellipse")
     print("Stokes Q is positive")
 else:
+    print("\n")
     print("Wave energy propagating downwards")
     print("Anticlockwise rotation of the polarized ellipse")
     print("Stokes Q is negative")
@@ -361,16 +364,21 @@ polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_
 
 # [Yoo et al, 2018]
 if 0.5 <= polarization_factor < 1:
-    print("d=%.2f -- Most likely an AGW"%polarization_factor)
+    print("\n")
+    print("d = %.2f -- Most likely an AGW"%polarization_factor)
 elif polarization_factor == 1:
-    print("d=%.2f -- Monochromatic Wave"%polarization_factor)
+    print("\n")
+    print("d = %.2f -- Monochromatic Wave"%polarization_factor)
 elif polarization_factor == 0:
-    print("d=%.2f -- Not an AGW; no polarization relationship"%polarization_factor)
+    print("\n")
+    print("d = %.2f -- Not an AGW; no polarization relationship"%polarization_factor)
 else:
-    print("d=%.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
+    print("\n")
+    print("d = %.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
 
 # [Koushik et. al, 2019]  -- stokes p and q less than threshold value might not be not agws
 if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
+    print("\n")
     print("Might not be an AGW; representative of poor wave activity")
 
 
@@ -381,8 +389,10 @@ richardson_number = np.mean(richardson_number)
 # [Pfenninger et. al, 1999] -
 # if N^2 and R < 0
 if mean_buoyancy_frequency**2 < 0 and richardson_number < 0:
+    print("\n")
     print("Convectively unstable")
 elif 0 < richardson_number < 0.25:
+    print("\n")
     print("Dynamically unstable")
 
 # Eqn. 11 from [Pfenninger et. al, 1999]
@@ -397,11 +407,10 @@ theta = np.arctan2(Stokes_P, Stokes_D) / 2
 
 # Coriolis Force
 # Omega is rotation rate of earth
-# [https://www.teos-10.org/pubs/gsw/pdf/f.pdf]
 # [Pfenninger et. al, 1999] -- Coriolis forced causes wind vectors to rotate with height & form an ellipse
 latitude_artesia = 32.842258  # degrees
 omega_Earth = 7.29e-5  # [radians /seconds]
-## [Fritts and Alexander: MIDDLE ATMOSPHERE GRAVITY WAVE DYNAMIC]
+# [Fritts and Alexander, 2003]
 f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia))
 
 

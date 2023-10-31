@@ -16,6 +16,8 @@ https://www.aoml.noaa.gov/ftp/hrd/annane/prelim_notes/Potential_Temperature.pdf
 https://glossary.ametsoc.org/wiki/Potential_temperature
 http://weatherclimatelab.mit.edu/wp-content/uploads/2018/02/Potential-temperature.pdf
 
+Coriolis Parameter:
+https://www.teos-10.org/pubs/gsw/pdf/f.pdf
 
 Python Related Websites:
 
@@ -50,6 +52,7 @@ Journals:
 
 [Murphy et al, 2014] -- https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448
 
+[Fritts and Alexander, 2003] -- https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2001RG000106
 
 check out:
 
