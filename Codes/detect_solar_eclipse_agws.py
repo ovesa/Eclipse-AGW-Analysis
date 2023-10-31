@@ -414,10 +414,17 @@ hilbert_t = it_wave.imag
 
 # sign determines direction of propagaton
 sign = U_prime * hilbert_t
-len(np.unique(np.sign(sign))) == 1
-theta_deg = np.rad2deg(theta)
 
-# positive, or negative sign == theta +/- 180 deg
+# [Koushik et. al, 2019]
+if np.sum(sign < 0, axis=0) > 0:
+    print("sign of direction is negative")
+    theta = np.deg2rad(np.rad2deg(theta) + 180 )
+
+elif np.sum(sign > 0, axis=0)> 0:
+    print("sign of direction is positive")
+    theta = theta
+
+
 
 
 # coherencey, correlated power between U and V
