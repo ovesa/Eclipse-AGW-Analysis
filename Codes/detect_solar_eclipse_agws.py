@@ -12,7 +12,7 @@ import matplotlib
 
 import plottingfunctions
 import datafunctions
-
+import toml
 plt.ion()
 
 ################### Plotting Properties ###################
@@ -218,7 +218,7 @@ coi_1d =  v_coi #+ u_coi
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 0
+peak_nom = 1
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
@@ -226,6 +226,10 @@ associated_height_range_of_boundary =  choose_data_frame_analyze["Geopot [m]"].i
 
 associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[peak_nom][1]] # m
 associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom][1]] # TimeStamp [UTC]
+
+
+height_index_of_max_local_power = peaks[peak_nom][1]
+scale_index_of_max_local_power = peaks[peak_nom][0]
 
 ################### Plot Power Surface ###################
 
@@ -294,7 +298,7 @@ it_wave = (t_inverted_coeff)[FWHM_variance]
 ################### Hodograph Analysis ###################
 
 plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
-# plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave, iv_wave,choose_data_frame_analyze)
+plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000)[FWHM_variance])
 
 ################### Extracting Wave Parameters ###################
 
@@ -318,11 +322,11 @@ potential_temperature = (
 # Eqn. 4 from [Pfenninger et. al, 1999]
 mean_buoyancy_frequency = np.sqrt(
     (grav_constant/ potential_temperature) * np.gradient(potential_temperature, spatial_resolution)
-) # [Hz]
+) # [Hz] = [rad/s]
 
 # average over boundary which wave was detected
 # Upper frequency for the gravity waves
-mean_buoyancy_frequency = mean_buoyancy_frequency[vertical_extent_coordx:vertical_extent_coordy].mean(skipna=True) # [Hz]
+mean_buoyancy_frequency = mean_buoyancy_frequency[vertical_extent_coordx:vertical_extent_coordy].mean(skipna=True) # [Hz] = [rad/s]
 
 # Mean buoyancy period
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
@@ -357,12 +361,15 @@ else:
     print("Anticlockwise rotation of the polarized ellipse")
     print("Stokes Q is negative")
 
+# [Koushik et. al, 2019]  -- stokes p or q less than threshold value might not be not agws
+if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
+    print("\n")
+    print("Might not be an AGW; representative of poor wave activity")
 
 
 # stastical measure of the coherence of the wave field
 # degree of polarization
 polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
-
 
 # [Yoo et al, 2018]
 if 0.5 <= polarization_factor < 1:
@@ -378,16 +385,15 @@ else:
     print("\n")
     print("d = %.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
 
-# [Koushik et. al, 2019]  -- stokes p and q less than threshold value might not be not agws
-if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
-    print("\n")
-    print("Might not be an AGW; representative of poor wave activity")
 
-
+height_range_over_vertical_extent = choose_data_frame_analyze["Geopot [m]"][FWHM_variance]
+u_zonal_perturbations_over_vertical_extent = u_zonal_perturbations[FWHM_variance]
+v_meridional_perturbations_over_vertical_extent = v_meridional_perturbations[FWHM_variance]
 
 # dynamic shear instability -- Richardson Number
-richardson_number = mean_buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations[vertical_extent_coordx:vertical_extent_coordy],choose_data_frame_analyze["Geopot [m]"][vertical_extent_coordx:vertical_extent_coordy])**2 + np.gradient(v_meridional_perturbations[vertical_extent_coordx:vertical_extent_coordy],choose_data_frame_analyze["Geopot [m]"][vertical_extent_coordx:vertical_extent_coordy])**2   )
+richardson_number = mean_buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations_over_vertical_extent,height_range_over_vertical_extent)**2 + np.gradient(v_meridional_perturbations_over_vertical_extent,height_range_over_vertical_extent)**2   )
 richardson_number = np.mean(richardson_number)
+
 # [Pfenninger et. al, 1999] -
 # if N^2 and R < 0
 if mean_buoyancy_frequency**2 < 0 and richardson_number < 0:
@@ -452,24 +458,23 @@ eta = (0.5) * np.arcsin(
     Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q**2)
 )
 # [Yoo et al, 2018] -- Eqn 6 & 7
-# [Koushik et. al, 2019] -- typical values of axial ratios [1.0, 3.5]; median: 1.4
+# [Koushik et. al, 2019] -- typical values of inverse axial ratios [1.0, 3.5]; median: 1.4
 axial_ratio = np.tan(eta)
-inverse_axialratio = 1/ axial_ratio
+inverse_axialratio = np.abs(1/ axial_ratio)
 
-
-# vertical wavenumber m
-vertical_wavenumber = (2 * np.pi) / u_periods
-vertical_wavelength = u_periods
-
-# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency -- frequency observed in the reference frame moving with the background wind
-# Typical values are from 1.0 to 3.5
-intrinsic_frequency = f_coriolis * axial_ratio
+intrinsic_frequency = f_coriolis * inverse_axialratio
 
 
-# [Murphy et al, 2014] -- Eqn 82
-horizontal_wavenumber = (vertical_wavenumber/mean_buoyancy_frequency)*np.sqrt(intrinsic_frequency**2 - f_coriolis**2)
-horizontal_wavelength = (2 * np.pi) / horizontal_wavenumber
+
+# vertical wavenumber and wavelength
+vertical_wavenumber = (2 * np.pi) / u_periods[scale_index_of_max_local_power] # [1/m]
+vertical_wavelength = u_periods[scale_index_of_max_local_power] # [m]
+
+
+# horizontal wavenumber and wavelength [Murphy et al, 2014] -- Eqn B2
+horizontal_wavenumber = (vertical_wavenumber/mean_buoyancy_frequency)*np.sqrt(intrinsic_frequency**2 - f_coriolis**2) # [1/m]
+horizontal_wavelength = (2 * np.pi) / horizontal_wavenumber # [m]
 
 
 
@@ -483,7 +488,6 @@ vertical_extent_of_zonal_perturbation = np.mean((iu_wave.real)**2)
 vertical_extent_of_meridional_perturbation = np.mean((iv_wave.real)**2)
 vertical_extent_of_temperature = np.mean((it_wave.real / choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])**2)
 
-
 # Eqn. 14 & 15 [Koushik et. al, 2019]
 #  gravity wave kinetic/potential energy density [J/Kg]
 kinetic_energy = (0.5) * (vertical_extent_of_zonal_perturbation + vertical_extent_of_meridional_perturbation)
@@ -491,11 +495,7 @@ potential_energy = (0.5) * (grav_constant**2/mean_buoyancy_frequency**2 )* verti
 
 total_energy_of_packet =  kinetic_energy + potential_energy
 
-
-
-# intrinsic group velocities 
-
-# intrinsic vertical group velocity
+# intrinsic vertical group velocity [m/s] 
 # [Murphy et al, 2014] -- Eqn B5
 cgz = -1 * ((intrinsic_frequency**2 - f_coriolis**2)/(intrinsic_frequency*vertical_wavenumber))
 
@@ -505,24 +505,28 @@ k = horizontal_wavenumber*np.sin(theta)
 # meridional wavenumber -- [Murphy et al, 2014] -- Table 2
 l = horizontal_wavenumber*np.cos(theta)
 
-# intrinsice vertical phase speed -- [Murphy et al, 2014] -- Table 2
+# intrinsice vertical phase speed [m/s] -- [Murphy et al, 2014] -- Table 2
 cz = intrinsic_frequency/vertical_wavenumber
 
-# intrinsic horizontal phase speed -- [Murphy et al, 2014] -- Table 2
+# intrinsic horizontal phase speed [m/s] -- [Murphy et al, 2014] -- Table 2
 c_hor = intrinsic_frequency/horizontal_wavenumber
 
-# intrinsic zonal phase speed -- [Murphy et al, 2014] -- Table 2
+# intrinsic zonal phase speed [m/s] -- [Murphy et al, 2014] -- Table 2
 cx = intrinsic_frequency/k
 
-# intrinsice meridional phase speed -- [Murphy et al, 2014] -- Table 2
+# intrinsice meridional phase speed [m/s] -- [Murphy et al, 2014] -- Table 2
 cy = intrinsic_frequency/l
 
-# intrinsic zonal group velocity -- [Murphy et al, 2014] -- Table 2
+# intrinsic zonal group velocity [m/s] -- [Murphy et al, 2014] -- Table 2
 cgx = k*mean_buoyancy_frequency**2/(intrinsic_frequency*vertical_wavenumber**2)
 
-# intrinsic meridional group velocity -- [Murphy et al, 2014] -- Table 2
+# intrinsic meridional group velocity [m/s] -- [Murphy et al, 2014] -- Table 2
 cgy = l*mean_buoyancy_frequency**2/(intrinsic_frequency*vertical_wavenumber**2)
 
-# intrinsic horizontal group velocity -- [Murphy et al, 2014] -- Table 2
+# intrinsic horizontal group velocity [m/s] -- [Murphy et al, 2014] -- Table 2
 cgh = np.sqrt(cgx**2 + cgy**2)
 
+
+
+
+data_dictionary = {}

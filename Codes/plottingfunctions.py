@@ -284,40 +284,48 @@ def plot_potential_temperature_vs_pressure(potential_temperature_array, temperat
         A figure
     """
 
-    fig = plt.figure()
-    plt.plot(potential_temperature_array, pressure_array, color='k', label="Potential Temperature [K]")
-    plt.plot(temperature_array, pressure_array, color='k', linestyle='--', label="Temperature [K]")
+    fig, ax = plt.subplots(1,1,figsize=[8, 6])    
+    ax.plot(potential_temperature_array, pressure_array, color='k', label="Potential Temperature [K]")
+    ax.plot(temperature_array, pressure_array, color='k', linestyle='--', label="Temperature [K]")
 
-    plt.gca().invert_yaxis()
-    plt.xlabel("Temperature [K]")
-    plt.ylabel("Pressure [hPa]")
-    plt.legend(loc ='best',fancybox=True)
-    plt.tight_layout()
+    ax.invert_yaxis()
+    ax.set_xlabel("Temperature [K]")
+    ax.set_ylabel("Pressure [hPa]")
+    ax.legend(loc ='best',fancybox=True)
+    ax.yaxis.get_ticklocs(minor=True)
+    ax.xaxis.get_ticklocs(minor=True)
+
+    ax.minorticks_on()
+    fig.tight_layout()
 
     return fig
 
 
-def winds_associated_with_dominant_vertical_wavelengths(zonal_wind_perturbation, meridional_wind_perturbation,dataframe):
+def winds_associated_with_dominant_vertical_wavelengths(zonal_wind_perturbation, meridional_wind_perturbation,height):
     """
     Figure of the zonal and meridional winds associated with the most dominant vertical wavelength of the gravity wave packet.
 
     Arguments:
         zonal_wind_perturbation -- Zonal wind perturbation corresponding to the gravity wave packet [m/s].
         meridional_wind_perturbation -- Meridional wind perturbation corresponding to the gravity wave packet [m/s].
-        dataframe -- The Pandas DataFrame.
+        height -- Height array [km].
 
     Returns:
         A figure.
     """    
 
-    fig = plt.figure(figsize=[5, 8])
-    plt.title("Dominant Vertical Wavelength \n Associated Winds")
-    plt.plot(zonal_wind_perturbation,dataframe["Geopot [m]"]/1000, color="k", linewidth=1.5, zorder=0, label="Zonal Wind Speed")
-    plt.plot(meridional_wind_perturbation,dataframe["Geopot [m]"]/1000, color="red", linewidth=1.5, zorder=0,label="Meridional Wind Speed")
-    plt.ylabel("Altitude [km]")
-    plt.xlabel("Perturbations [m/s]")
-    plt.legend(loc ='lower right',fancybox=True)
-    plt.tight_layout()
+    fig, ax = plt.subplots(1,1,figsize=[8, 6])  
+    ax.set_title("Dominant Vertical Wavelength \n Associated Winds")
+    ax.plot(zonal_wind_perturbation,height, color="k", linewidth=1.5, zorder=0, label="Zonal Wind Speed")
+    ax.plot(meridional_wind_perturbation,height, color="red", linewidth=1.5, zorder=0,label="Meridional Wind Speed")
+    ax.set_ylabel("Altitude [km]")
+    ax.set_xlabel("Perturbations [m/s]")
+    ax.legend(loc ='lower right',fancybox=True)
+    ax.yaxis.get_ticklocs(minor=True)
+    ax.xaxis.get_ticklocs(minor=True)
+
+    ax.minorticks_on()
+    fig.tight_layout()
 
     return fig
 
@@ -335,11 +343,10 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
         A figure.
     """    
 
-    fig = plt.figure(figsize=[5, 4])
+    fig, ax = plt.subplots(1,1,figsize=[8, 6])  
+    ax.plot(zonal_wind_perturbation, meridional_wind_perturbation, color="k", linewidth=1.5,zorder=0)
 
-    plt.plot(zonal_wind_perturbation, meridional_wind_perturbation, color="k", linewidth=1.5,zorder=0)
-
-    plt.scatter(
+    ax.scatter(
         zonal_wind_perturbation[0],
         meridional_wind_perturbation[0],
         color="r",
@@ -348,12 +355,12 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
         zorder=1, edgecolor='k'
     )
 
-    plt.annotate(
+    ax.annotate(
         "%.1f km" % (dataframe["Geopot [m]"].iloc[0] / 1000),
         (zonal_wind_perturbation[0], meridional_wind_perturbation[0]),
     )
 
-    plt.scatter(
+    ax.scatter(
         zonal_wind_perturbation[-1],
         meridional_wind_perturbation[-1],
         color="gold",
@@ -362,13 +369,18 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
         zorder=1, edgecolor='k',
     )
 
-    plt.annotate(
+    ax.annotate(
         "%.1f km" % (dataframe["Geopot [m]"].iloc[-1] / 1000),
         (zonal_wind_perturbation[-1], meridional_wind_perturbation[-1])
     )
 
-    plt.xlabel("Zonal Wind Speed [m/s]")
-    plt.ylabel("Meridional Wind Speed [m/s]")
+    ax.set_xlabel("Zonal Wind Speed [m/s]")
+    ax.set_ylabel("Meridional Wind Speed [m/s]")
+    
+    ax.yaxis.get_ticklocs(minor=True)
+    ax.xaxis.get_ticklocs(minor=True)
 
-    plt.tight_layout()
+    ax.minorticks_on()
+
+    fig.tight_layout()
     return fig
