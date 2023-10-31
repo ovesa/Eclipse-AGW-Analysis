@@ -6,21 +6,20 @@ import glob
 from waveletFunctions import wave_signif
 import copy
 
-import pycwt as wavelet_method2
 import cmasher as cm
-
-plt.ion()
   
 import matplotlib
 
 import plottingfunctions
 import datafunctions
 
+plt.ion()
+
 ################### Plotting Properties ###################
 
 tex_fonts = {
     "text.usetex": False,
-    "font.family": "serif",
+    "font.family": 'DeJavu Serif',
     "font.serif": "Times New Roman",
     # Use 10pt font in plots, to match 10pt font in document
     "xtick.direction": "in",
@@ -41,13 +40,17 @@ matplotlib.rcParams.update(tex_fonts)
 
 # path to data
 path = "/media/oana/Data1/Annular_Eclipse_Analysis/Data/"
+path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
+
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
 file_nom = -1
 
+# Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
 
+# Extract several key parameters from dataset
 (
     original_UTC_time,
     starting_time_for_flight,
@@ -139,7 +142,7 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     v_meridional_perturbations,
     temperature_perturbations,
     starting_time_for_flight,
-    "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/First-Order-Perturbations/",
+    path_to_save_figures + "/First-Order-Perturbations/",
     save_fig=False,
 )
 

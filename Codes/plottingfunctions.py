@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from matplotlib.ticker import AutoMinorLocator
 
 def plot_vertical_profiles_with_residual_perturbations(
     dataframe,
@@ -123,6 +123,9 @@ def plot_vertical_profiles_with_residual_perturbations(
 
     for ax in [axs[0, 0], axs[1, 0], axs[2, 0]]:
         ax.set(ylabel="Altitude [m]")
+        ax.xaxis.set_minor_locator(AutoMinorLocator(4))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+
 
     plt.tight_layout()
 
