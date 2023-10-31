@@ -189,10 +189,10 @@ def plot_power_surface(
         (periods) / 1000,
         (power_array),
         levels=200,
-        cmap=colormap,
+        cmap=colormap,vmax=9
     )
     cb = plt.colorbar()
-    cb.set_label("Power [m^2/s^2]")
+    cb.set_label("Power [m^$2$/s^$2$]")
 
     plt.contour(
         height_km,
