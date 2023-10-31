@@ -316,7 +316,7 @@ mean_buoyancy_frequency = np.sqrt(
 
 # average over boundary which wave was detected
 # Upper frequency for the gravity waves
-mean_buoyancy_frequency = mean_buoyancy_frequency[boundary_cols[0]:boundary_cols[1]].mean(skipna=True) # [Hz]
+mean_buoyancy_frequency = mean_buoyancy_frequency[vertical_extent_coordx:vertical_extent_coordy].mean(skipna=True) # [Hz]
 
 # Mean buoyancy period
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
@@ -373,7 +373,7 @@ if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
 
 
 # dynamic shear instability -- Richardson Number
-richardson_number = mean_buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations,choose_data_frame_analyze["Geopot [m]"])**2 + np.gradient(v_meridional_perturbations,choose_data_frame_analyze["Geopot [m]"])**2   )
+richardson_number = mean_buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations[vertical_extent_coordx:vertical_extent_coordy],choose_data_frame_analyze["Geopot [m]"][vertical_extent_coordx:vertical_extent_coordy])**2 + np.gradient(v_meridional_perturbations[vertical_extent_coordx:vertical_extent_coordy],choose_data_frame_analyze["Geopot [m]"][vertical_extent_coordx:vertical_extent_coordy])**2   )
 richardson_number = np.mean(richardson_number)
 # [Pfenninger et. al, 1999] -
 # if N^2 and R < 0
@@ -438,11 +438,11 @@ eta = (0.5) * np.arcsin(
     Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q**2)
 )
 # [Yoo et al, 2018] -- Eqn 6 & 7
+# [Koushik et. al, 2019] -- typical values of axial ratios [1.0, 3.5]; median: 1.4
 axial_ratio = np.tan(eta)
 inverse_axialratio = 1/ axial_ratio
 
 
-# [Koushik et. al, 2019] -- typical values of axial ratios [1.0, 3.5]; median: 1.4
 
 
 
@@ -454,7 +454,7 @@ inverse_axialratio = 1/ axial_ratio
 
 # Eckermann, S. D., & Vincent, R. A. (1989). Falling sphere observations of anisotropic gravity wave motions in the upper stratosphere over Australia. Pure and Applied Geophysics PAGEOPH, 130(2-3), 509–532. doi:10.1007/bf00874472
 
-# m
+# vertical wavenumber m
 vertical_wavenumber = (2 * np.pi) / u_periods
 vertical_wavelength = u_periods
 
@@ -476,15 +476,15 @@ omega_squared = mean_buoyancy_frequency**2 * (horizontal_wavenumber**2 / vertica
 
 # [Murphy et al, 2014] -- Eqn 2
 # averages done over vertical span of the wave
-vertical_extent_of_zonal_perturbation = np.mean((iu_wave.real[boundary_cols[0]:boundary_cols[1]])**2)
-vertical_extent_of_meridional_perturbation = np.mean((iv_wave.real[boundary_cols[0]:boundary_cols[1]])**2)
-temperature_val = np.mean(((it_wave.real[boundary_cols[0]:boundary_cols[1]]**2 / temperature[boundary_cols[0]:boundary_cols[1]])))
+vertical_extent_of_zonal_perturbation = np.mean((iu_wave.real)**2)
+vertical_extent_of_meridional_perturbation = np.mean((iv_wave.real)**2)
+vertical_extent_of_temperature = np.mean((it_wave.real / choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])**2)
 
 
 # Eqn. 14 & 15 [Koushik et. al, 2019]
 #  gravity wave kinetic/potential energy density [J/Kg]
-kinetic_energy = (0.5) * (np.mean(iu_wave.real**2) + np.mean(iv_wave.real**2))
-potential_energy = (0.5) * (grav_constant**2/mean_buoyancy_frequency**2 )* temperature_val
+kinetic_energy = (0.5) * (vertical_extent_of_zonal_perturbation + vertical_extent_of_meridional_perturbation)
+potential_energy = (0.5) * (grav_constant**2/mean_buoyancy_frequency**2 )* vertical_extent_of_temperature
 
 
 total_energy_of_packet =  kinetic_energy + potential_energy
