@@ -182,19 +182,24 @@ def plot_power_surface(
     power_array = np.log(copy.deepcopy(power_array))
     power_array[power_array < 0] = 0
 
-    fig = plt.figure(figsize=[8, 6])
+    fig, ax = plt.subplots(figsize=[8, 6])
     
-    plt.contourf(
+    im =ax.contourf(
         height_km,
         (periods) / 1000,
         (power_array),
         levels=200,
         cmap=colormap,vmin=0,vmax=9
     )
-    cb = plt.colorbar()
+    ax.yaxis.get_ticklocs(minor=True)
+    ax.xaxis.get_ticklocs(minor=True)
+
+    ax.minorticks_on()
+    
+    cb = fig.colorbar(im, cax=ax)
     cb.set_label(r"Power [m$^2$/s$^2$]")
 
-    plt.contour(
+    ax.contour(
         height_km,
         periods / 1000,
         peak_container,
@@ -202,7 +207,7 @@ def plot_power_surface(
         levels=[0.5],
     )
 
-    plt.contour(
+    ax.contour(
         height_km,
         periods / 1000,
         signif,
@@ -210,14 +215,14 @@ def plot_power_surface(
         levels=[0.5],
     )
 
-    plt.contour(
+    ax.contour(
         height_km,
         periods / 1000,
         coi,
         colors="black",
         levels=[0.5],
     )
-    plt.scatter(
+    ax.scatter(
         height_km[peaks.T[1]],
         periods[peaks.T[0]] / 1000,
         c="red",
@@ -225,9 +230,9 @@ def plot_power_surface(
     )
 
 
-    plt.yscale("log")
+    ax.set_scale("log")
 
-    plt.xlim(
+    ax.set_xlim(
         [
             height_km.min(),
             height_km.max(),
@@ -235,12 +240,12 @@ def plot_power_surface(
     )
     #
 
-    plt.ylabel("Vertical Wavelength [km]")
-    plt.xlabel("Altitude [km]")
+    ax.set_ylabel("Vertical Wavelength [km]")
+    ax.set_xlabel("Altitude [km]")
 
 
 
-    plt.title("Power Surface at " + str(time) + " UTC")
+    ax.set_title("Power Surface at " + str(time) + " UTC")
     plt.tight_layout()
 
     if save_fig:

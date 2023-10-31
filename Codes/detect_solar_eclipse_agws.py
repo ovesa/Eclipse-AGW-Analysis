@@ -216,7 +216,7 @@ coiMask = np.array(
 
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 8
+peak_nom = 0
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
@@ -404,6 +404,9 @@ elif 0 < richardson_number < 0.25:
 # horizontal direction of propagation of GW (deg clockwise from N)
 theta = np.arctan2(Stokes_P, Stokes_D) / 2
 
+# phase difference
+# [Eckerman and Vincent, 1989] -- Eqn 7
+phase_difference = np.arctan2(Stokes_Q,Stokes_P)
 
 # Coriolis Force
 # Omega is rotation rate of earth
