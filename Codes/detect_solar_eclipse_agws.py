@@ -444,11 +444,6 @@ inverse_axialratio = 1/ axial_ratio
 
 
 
-
-
-
-
-
 # shear in wind compnonet transcverse to propaghation direcction will change axial ratio
 # corrrected_axial_ration = np.abs()
 
@@ -486,6 +481,40 @@ vertical_extent_of_temperature = np.mean((it_wave.real / choose_data_frame_analy
 kinetic_energy = (0.5) * (vertical_extent_of_zonal_perturbation + vertical_extent_of_meridional_perturbation)
 potential_energy = (0.5) * (grav_constant**2/mean_buoyancy_frequency**2 )* vertical_extent_of_temperature
 
-
 total_energy_of_packet =  kinetic_energy + potential_energy
+
+
+
+# intrinsic group velocities 
+
+# intrinsic vertical group velocity
+# [Murphy et al, 2014] -- Eqn B5
+cgz = -1 * ((intrinsic_frequency**2 - f_coriolis**2)/(intrinsic_frequency*vertical_wavenumber))
+
+# zonal wavenumber -- [Murphy et al, 2014] -- Table 2
+k = horizontal_wavenumber*np.sin(theta)
+
+# meridional wavenumber -- [Murphy et al, 2014] -- Table 2
+l = horizontal_wavenumber*np.cos(theta)
+
+# intrinsice vertical phase speed -- [Murphy et al, 2014] -- Table 2
+cz = intrinsic_frequency/vertical_wavenumber
+
+# intrinsic horizontal phase speed -- [Murphy et al, 2014] -- Table 2
+c_hor = intrinsic_frequency/horizontal_wavenumber
+
+# intrinsic zonal phase speed -- [Murphy et al, 2014] -- Table 2
+cx = intrinsic_frequency/k
+
+# intrinsice meridional phase speed -- [Murphy et al, 2014] -- Table 2
+cy = intrinsic_frequency/l
+
+# intrinsic zonal group velocity -- [Murphy et al, 2014] -- Table 2
+cgx = k*mean_buoyancy_frequency**2/(intrinsic_frequency*vertical_wavenumber**2)
+
+# intrinsic meridional group velocity -- [Murphy et al, 2014] -- Table 2
+cgy = l*mean_buoyancy_frequency**2/(intrinsic_frequency*vertical_wavenumber**2)
+
+# intrinsic horizontal group velocity -- [Murphy et al, 2014] -- Table 2
+cgh = np.sqrt(cgx**2 + cgy**2)
 
