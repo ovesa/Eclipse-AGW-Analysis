@@ -131,7 +131,7 @@ temperature_perturbations = datafunctions.derive_first_order_perturbations(
 
 
 plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
-    choose_data_frame_analyze,
+    choose_data_frame_analyze["Geopot [m]"],
     u_zonal_speed,
     v_meridional_speed,
     temperature,
@@ -227,7 +227,7 @@ associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[pea
 
 ################### Plot Power Surface ###################
 
-colormap = cm.chroma
+colormap = cm.eclipse
 
 plottingfunctions.plot_power_surface(
     choose_data_frame_analyze,

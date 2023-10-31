@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoMinorLocator
+from matplotlib.ticker import AutoMinorLocator, MultipleLocator
+import copy
 
 def plot_vertical_profiles_with_residual_perturbations(
     height,
@@ -22,7 +23,7 @@ def plot_vertical_profiles_with_residual_perturbations(
     and the first-order perturbations of these variables side by side.
 
     Arguments:
-        dataframe -- The Pandas DataFrame.
+        dataframe -- altitude array [m].
         u_zonal_speed -- The original zonal wind speed perturbations [m/s].
         v_meridional_speed -- The original meridional wind speed perturbations [m/s].
         temperature -- The original temperature perturbations [C].
@@ -119,10 +120,10 @@ def plot_vertical_profiles_with_residual_perturbations(
 
     axs[2, 1].axvline(x=0, color="k", linestyle="--", linewidth=1.5)
 
-    axs[2, 1].set_xlabel("Residual [s]")
+    axs[2, 1].set_xlabel("Residual [C]")
 
     for ax in [axs[0, 0], axs[1, 0], axs[2, 0]]:
-        ax.set(ylabel="Altitude [km]")
+        ax.set(ylabel="Altitude [m]")
         ax.xaxis.set_minor_locator(AutoMinorLocator(4))
         ax.yaxis.set_minor_locator(AutoMinorLocator(4))
 
@@ -145,7 +146,7 @@ def plot_vertical_profiles_with_residual_perturbations(
 
 
 def plot_power_surface(
-    dataframe,
+    height_km,
     power_array,
     periods,
     peak_container,
@@ -161,7 +162,7 @@ def plot_power_surface(
     Plot the power surface.
 
     Arguments:
-        dataframe -- The Pandas DataFrame.
+        height -- height array [km]
         power_array -- The power surface [m^2/s^2].
         periods -- The wavelet coefficient scales; corresponds to the vertical wavelength [m].
         peak_container -- The true/false array marking the boundaries of the AGW wave packet.
@@ -178,12 +179,13 @@ def plot_power_surface(
     Returns:
         Plots the power surface with the local maxima identified.
     """
-    power_array = np.log(power_array.copy())
+    power_array = np.log(copy.deepcopy(power_array))
     power_array[power_array < 0] = 0
 
     fig = plt.figure(figsize=[8, 6])
+    
     plt.contourf(
-        dataframe["Geopot [m]"],
+        height_km,
         (periods) / 1000,
         (power_array),
         levels=200,
@@ -193,7 +195,7 @@ def plot_power_surface(
     cb.set_label("Power [m^2/s^2]")
 
     plt.contour(
-        dataframe["Geopot [m]"],
+        height_km,
         periods / 1000,
         peak_container,
         colors="r",
@@ -201,7 +203,7 @@ def plot_power_surface(
     )
 
     plt.contour(
-        dataframe["Geopot [m]"],
+        height_km,
         periods / 1000,
         signif,
         colors="black",
@@ -209,14 +211,14 @@ def plot_power_surface(
     )
 
     plt.contour(
-        dataframe["Geopot [m]"],
+        height_km,
         periods / 1000,
         coi,
         colors="black",
         levels=[0.5],
     )
     plt.scatter(
-        dataframe["Geopot [m]"][peaks.T[1]],
+        height_km[peaks.T[1]],
         periods[peaks.T[0]] / 1000,
         c="red",
         marker=".",
@@ -226,14 +228,17 @@ def plot_power_surface(
 
     plt.xlim(
         [
-            dataframe["Geopot [m]"].min(),
-            dataframe["Geopot [m]"].max(),
+            height_km.min(),
+            height_km.max(),
         ]
     )
     #
 
     plt.ylabel("Vertical Wavelength [km]")
-    plt.xlabel("Altitude [m]")
+    plt.xlabel("Altitude [km]")
+
+    plt.axes().yaxis.set_minor_locator(MultipleLocator(5))
+    plt.axes().xaxis.set_minor_locator(MultipleLocator(5))
 
     plt.title("Power Surface at " + str(time) + " UTC")
     plt.tight_layout()
