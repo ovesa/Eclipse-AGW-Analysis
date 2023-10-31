@@ -54,6 +54,8 @@ Journals:
 
 [Fritts and Alexander, 2003] -- https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2001RG000106
 
+[Eckermann and Vincent, 1989] -- https://link.springer.com/article/10.1007/BF00874472
+
 check out:
 
 https://amt.copernicus.org/articles/13/479/2020/amt-13-479-2020.pdf

@@ -421,7 +421,6 @@ U_prime = iu_wave.real * np.cos(theta) + iv_wave.real * np.sin(theta)
 
 # Hilbert transform of the temperature perturbation
 # [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
-
 hilbert_t = it_wave.imag
 
 # sign determines direction of propagaton
@@ -429,27 +428,18 @@ sign = U_prime * hilbert_t
 
 # [Koushik et. al, 2019]
 if np.sum(sign < 0, axis=0) > 0:
+    print("\n")
     print("sign of direction is negative")
     theta = np.deg2rad(np.rad2deg(theta) + 180 )
 
 elif np.sum(sign > 0, axis=0)> 0:
+    print("\n")
     print("sign of direction is positive")
     theta = theta
 
 
-
-
 # coherencey, correlated power between U and V
 C = np.sqrt((Stokes_P**2 + Stokes_Q**2) / (Stokes_I**2 - Stokes_D**2))
-
-# # https://scipython.com/book/chapter-6-numpy/examples/creating-a-rotation-matrix-in-numpy/
-# rotation_matrix = np.array(
-#     ((np.cos(theta), -np.sin(theta)), (np.sin(theta), np.cos(theta)))
-# )
-# wind_matrix = np.array([iu_wave.real, iv_wave.real])
-# wind_matrix = np.dot(rotation_matrix, wind_matrix)
-# axial_ration2 = np.linalg.norm(wind_matrix[0]) / np.linalg.norm(wind_matrix[1])
-
 
 # axial ratio -- ratio of the minor axis to the maxjor axis; aspect ratio of the polarization ellipse
 # Eqn. 8 [Koushik et. al, 2019]
@@ -461,12 +451,6 @@ eta = (0.5) * np.arcsin(
 axial_ratio = np.tan(eta)
 inverse_axialratio = 1/ axial_ratio
 
-
-
-# shear in wind compnonet transcverse to propaghation direcction will change axial ratio
-# corrrected_axial_ration = np.abs()
-
-# Eckermann, S. D., & Vincent, R. A. (1989). Falling sphere observations of anisotropic gravity wave motions in the upper stratosphere over Australia. Pure and Applied Geophysics PAGEOPH, 130(2-3), 509–532. doi:10.1007/bf00874472
 
 # vertical wavenumber m
 vertical_wavenumber = (2 * np.pi) / u_periods
