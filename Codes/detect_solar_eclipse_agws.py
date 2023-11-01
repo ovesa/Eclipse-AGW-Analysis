@@ -45,7 +45,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 0
+file_nom = 3
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -157,6 +157,7 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
 )
 
 ################### Wavelet Analysis ###################
+# Isolate wave packets in wavenumber versus height space
 
 # padding for the ends of the time series to avoid wrap around effects
 padding = 1
@@ -186,7 +187,7 @@ t_coef, t_periods, t_scales, t_coi = datafunctions.compute_wavelet_components(
 # S(a,z) = abs(U(a,z))^2  + abs(V(a,z))^2; a = vertical wavelength, z = height
 power = abs(u_coef) ** 2 + abs(v_coef) ** 2  # [m^2/s^2]
 
-# Calculate the significance of the wavelet coefficients
+# Calculate the significance of the wavelet coefficients; LAG1- autocorrelation
 alpha_u = datafunctions.acorr(
     u_zonal_perturbations.values, lags=range(len(u_zonal_perturbations.values))
 )[1]
@@ -217,12 +218,12 @@ signif = power > signif
 # I assume that the cone of influence should match the wave significance array in using both zonal and meridional wavelet coefficient perturbations
 coiMask = np.array(
     [
-        np.array(u_periods + v_periods) <= (u_coi[i] + v_coi[i])
+        np.array(u_periods) <= (u_coi[i])
         for i in range(len(choose_data_frame_analyze["Geopot [m]"]))
     ]
 ).T
 
-coi_1d =  v_coi + u_coi
+coi_1d =  v_coi 
 
 ################### Find Local Maxima & Extract Boundaries Around Gravity Wave Packet ###################
 
@@ -231,6 +232,8 @@ peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
 peak_nom = 0
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
+
+
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
 associated_height_range_of_boundary =  choose_data_frame_analyze["Geopot [m]"].iloc[boundary_cols] # m
@@ -298,6 +301,30 @@ t_inverted_coeff = np.multiply(t_div_scale.sum(axis=0),wavelet_constant)
 horizontal_wind_variance = np.abs(u_inverted_coeff) ** 2 + np.abs(v_inverted_coeff) ** 2
 
 
+x1, y1, w, h = boundary_rows[0], boundary_cols[0], boundary_rows[1] - boundary_rows[0],  boundary_cols[1]  - boundary_cols[0]
+x2,y2 = x1+w,y1+h
+
+peaks_within_boundary = []
+## Find peaks within rectangular boundary:
+for nom in peaks:
+    if (x1 < nom[0] and nom[0] < x2):
+            if (y1 < nom[1] and nom[1] < y2):
+                peaks_within_boundary.append(nom)
+                
+                
+
+# If peaks is equal to itself essentially
+if len(peaks_within_boundary)==1 and np.array(peaks_within_boundary[0] == peaks[peak_nom]).all():
+    peaks_within_boundary = peaks[peak_nom]
+    horizontal_wind_variance = horizontal_wind_variance
+else:
+    horizontal_wind_variance = horizontal_wind_variance/2
+    
+    
+# zink if boundary of reconstructed wavelets overlap, horizontal wind variance is divided in equal parts
+
+
+
 # https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
 # Find the maximum value
 max_value = np.max(horizontal_wind_variance)
@@ -311,40 +338,20 @@ left_index = next( ( i for i in range(max_value_index,-1,-1) if horizontal_wind_
 right_index = next((i for i in range(max_value_index, len(horizontal_wind_variance)) if horizontal_wind_variance[i] <= half_max), len(horizontal_wind_variance) - 1)
 
 plt.figure()
-plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k')
-plt.scatter(left_index, horizontal_wind_variance[left_index], s= 30, zorder=1, color='red', edgecolor='k')
-plt.scatter(right_index, horizontal_wind_variance[right_index], s=30, zorder=1, color='red', edgecolor='k')
-plt.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30, zorder=1, color='gold', edgecolor='k')
+plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)
+plt.scatter(left_index, horizontal_wind_variance[left_index], s= 30, color='red', edgecolor='k',zorder=1)
+plt.scatter(right_index, horizontal_wind_variance[right_index], s=30,  color='red', edgecolor='k',zorder=1)
+plt.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30,  color='gold', edgecolor='k',zorder=1)
 plt.axhline(y=half_max, linestyle='--', color='navy')
 plt.xlim([max_value_index-100,max_value_index+100])
+plt.ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
+plt.xlabel("Arb")
 plt.tight_layout()
 plt.show()
 
 
-# # def get_full_width(x: np.ndarray, y: np.ndarray, height: float = 0.5) -> float:
-
-# y = horizontal_wind_variance
-# x = np.arange(len(horizontal_wind_variance))
-# x_low = int(np.interp(half_max, y[:max_value_index+1], x[:max_value_index+1]))
-# x_high = round(np.interp(half_max, np.flip(y[max_value_index:]), np.flip(x[max_value_index:])))
 
 
-
-# plt.figure()
-# plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)
-# plt.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30,  color='gold', edgecolor='k',zorder=1,)
-# plt.scatter(x_low,horizontal_wind_variance[(x_low)])
-# plt.scatter(x_high,horizontal_wind_variance[(x_high)])
-
-# plt.axhline(y=half_max, linestyle='--', color='navy')
-# plt.xlim([max_value_index-100,max_value_index+100])
-# plt.ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
-# plt.xlabel("Arb")
-# plt.tight_layout()
-# plt.show()
-
-
- 
  
 vertical_extent_coordx, vertical_extent_coordy = left_index,right_index
 # The reconstructed wind and temperature paramters based on the full width half max
@@ -352,10 +359,18 @@ iu_wave = (u_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 iv_wave = (v_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 it_wave = (t_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 
+
+
+
+
+
+
+
+
 ################### Hodograph Analysis ###################
 
 plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
-plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000)[FWHM_variance])
+plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
 
 ################### Extracting Wave Parameters ###################
 
@@ -388,11 +403,6 @@ mean_buoyancy_frequency = mean_buoyancy_frequency[vertical_extent_coordx:vertica
 # Mean buoyancy period
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
 
-## other checck
-# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/97JD03325
-#limit
-# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448 figure 1b
-#mean_buoyancy_frequency > intrinsic_frequency > intrinsic_frequency
 
 ## Stokes parameters for gravity waves
 # Eqn. 9 from [Pfenninger et. al, 1999]
@@ -448,9 +458,9 @@ else:
     print("d = %.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
 
 
-height_range_over_vertical_extent = choose_data_frame_analyze["Geopot [m]"][FWHM_variance]
-u_zonal_perturbations_over_vertical_extent = u_zonal_perturbations[FWHM_variance]
-v_meridional_perturbations_over_vertical_extent = v_meridional_perturbations[FWHM_variance]
+height_range_over_vertical_extent = choose_data_frame_analyze["Geopot [m]"][vertical_extent_coordx:vertical_extent_coordy]
+u_zonal_perturbations_over_vertical_extent = u_zonal_perturbations[vertical_extent_coordx:vertical_extent_coordy]
+v_meridional_perturbations_over_vertical_extent = v_meridional_perturbations[vertical_extent_coordx:vertical_extent_coordy]
 
 # dynamic shear instability -- Richardson Number
 richardson_number = mean_buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations_over_vertical_extent,height_range_over_vertical_extent)**2 + np.gradient(v_meridional_perturbations_over_vertical_extent,height_range_over_vertical_extent)**2   )
@@ -484,7 +494,7 @@ phase_difference = np.arctan2(Stokes_Q,Stokes_P)
 latitude_artesia = 32.842258  # degrees
 omega_Earth = 7.29e-5  # [radians /seconds]
 # [Fritts and Alexander, 2003]
-f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia))
+f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia)) # [rad/s]
 
 
 # remove ambiguity
@@ -522,12 +532,18 @@ eta = (0.5) * np.arcsin(
 # [Yoo et al, 2018] -- Eqn 6 & 7
 # [Koushik et. al, 2019] -- typical values of inverse axial ratios [1.0, 3.5]; median: 1.4
 axial_ratio = np.tan(eta)
-inverse_axialratio = np.abs(1/ axial_ratio)
+inverse_axialratio = np.abs(1/ axial_ratio) # [rad/s]
 
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency -- frequency observed in the reference frame moving with the background wind
 intrinsic_frequency = f_coriolis * inverse_axialratio # [rad/s]
 
 intrinsic_period = 2*np.pi/intrinsic_frequency # [s]
+
+## other checck
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/97JD03325
+#limit
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448 figure 1b
+#mean_buoyancy_frequency > intrinsic_frequency > intrinsic_frequency
 
 if intrinsic_frequency > mean_buoyancy_frequency:
     print("Intrinsic frequency of wave packet greater than the Brunt-Vaisala frequency...not possible")
