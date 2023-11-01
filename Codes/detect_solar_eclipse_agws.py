@@ -45,7 +45,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 3
+file_nom = 5
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -88,6 +88,7 @@ dat = datafunctions.clean_data(dat, tropopause_height, original_data_shape)
 dat = datafunctions.interpolate_data(dat, interpolation_limit)
 
 # Split dataset into multiple dataframes surrounding the gap of NaNs, if applicable
+# As of now, code ignores the other sections if available
 data_sections = datafunctions.check_data_for_interpolation_limit_set(
     dat, interpolation_limit
 )
@@ -95,7 +96,9 @@ data_sections = datafunctions.check_data_for_interpolation_limit_set(
 # Set the spatial resolution for the dataset
 dat = datafunctions.set_spatial_resolution_for_data(data_sections, spatial_resolution)
 
-# Using the first part of the dataset
+# Choose which data_sections to use
+# FUTURE: Discuss how to best tackle datasets that have a lot of consecutive NaNs
+# Upcoming wavelet analysis fails if NaNs or 0s are present in data
 choose_data_frame_analyze = dat[0]
 
 # Add in a new time column with the date and time in UTC
@@ -114,15 +117,15 @@ choose_data_frame_analyze = datafunctions.convert_seconds_to_timestamp(choose_da
 ################### Calculate First-Order Perturbations ###################
 
 # Fit the wind speeds and the temperature 
-v_meridional_fit = datafunctions.compute_second_order_polynomial_fits(
+v_meridional_fit = datafunctions.compute_polynomial_fits(
     choose_data_frame_analyze, v_meridional_speed, 2
 )
 
-u_zonal_fit = datafunctions.compute_second_order_polynomial_fits(
+u_zonal_fit = datafunctions.compute_polynomial_fits(
     choose_data_frame_analyze, u_zonal_speed, 2
 )
 
-temperature_fit = datafunctions.compute_second_order_polynomial_fits(
+temperature_fit = datafunctions.compute_polynomial_fits(
     choose_data_frame_analyze, temperature, 2
 )
 
@@ -155,6 +158,7 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     path_to_save_figures + "/First-Order-Perturbations/",
     save_fig=False,
 )
+
 
 ################### Wavelet Analysis ###################
 # Isolate wave packets in wavenumber versus height space

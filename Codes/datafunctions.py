@@ -333,7 +333,7 @@ def extract_wind_components_and_temperature(dataframe):
     return u_zonal_speed, v_meridional_speed, temperature
 
 
-def compute_second_order_polynomial_fits(dataframe, array, order):
+def compute_polynomial_fits(dataframe, array, order=2):
     """
     Calculate a least squares polynomial fit to the necessary variable. This step is necessary to
     remove the background state from the main vertical profile of the variable.
@@ -341,16 +341,17 @@ def compute_second_order_polynomial_fits(dataframe, array, order):
     Arguments:
         dataframe -- The Pandas DataFrame.
         array -- The array to perform the least squares polynomial fit.
-        order -- The degree of the fitting polynomial.
+
+    Keyword Arguments:
+        order -- The degree of the fitting polynomial (default: {2}).
 
     Returns:
         A vector of the polynomial coefficients that minimizes the squared error.
     """
-
-    array_fit = np.polyfit(dataframe["Geopot [m]"], array, order)
+    idx = np.isfinite(dataframe["Geopot [m]"]) & np.isfinite(array)
+    array_fit = np.polyfit(dataframe["Geopot [m]"][idx], array[idx], order)
 
     return array_fit
-
 
 def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
     """
