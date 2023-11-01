@@ -141,7 +141,7 @@ temperature_perturbations = datafunctions.derive_first_order_perturbations(
     choose_data_frame_analyze, temperature, temperature_fit
 )
 
-# Quick Plot
+# Quick Plot of First-Order Perturbations Vertical Profiles
 plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     choose_data_frame_analyze["Geopot [m]"],
     u_zonal_speed,
@@ -157,7 +157,6 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     path_to_save_figures + "/First-Order-Perturbations/",
     save_fig=False,
 )
-
 
 ################### Wavelet Analysis ###################
 # Wavelet Transform will isolate wave packets in wavenumber versus height space
@@ -239,11 +238,11 @@ associated_height_range_of_boundary =  choose_data_frame_analyze["Geopot [m]"].i
 associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[peak_nom][1]] # m
 associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom][1]] # TimeStamp [UTC]
 
-z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to the height
-a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the vertical wavelength
-
+z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to index of the max height
+a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the index of the max vertical wavelength
 
 peaks_within_boundaries = datafunctions.peaks_inside_rectangular_boundary(peaks, boundary_rows, boundary_cols)
+
 ################### Plot Power Surface ###################
 
 colormap = cm.eclipse
@@ -254,7 +253,7 @@ plottingfunctions.plot_power_surface(
     u_periods,
     peak_containers,
     signif,
-    coiMask,coiMask,
+    coiMask,
     peaks,
     colormap,
     starting_time_for_flight,
@@ -263,101 +262,16 @@ plottingfunctions.plot_power_surface(
 )
 
 ################### Inverse Wavelet Transform ###################
-
-
-    
+# [Zink and Vincent, 2001] -- Reconstruct perturbations associated with the gravity wave packet within the determined rectangular boundary
 u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,peak_containers,u_scales,dj,dt)
 v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,peak_containers,v_scales,dj,dt)
 t_inverted_coeff = datafunctions.inverse_wavelet_transform(t_coef,peak_containers,t_scales,dj,dt)
 
-horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_inverted_coeff, v_inverted_coeff,peaks_within_boundaries,peaks,peak_nom):
+horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_inverted_coeff, v_inverted_coeff,peaks_within_boundaries,peaks,peak_nom)
 
-    # # [Zink and Vincent, 2001] -- Reconstruct zonal and meridional perturbations associated with the gravity wave packet 
-    # # by using the inverse wavelet transform of the wavelet coefficients centered within the boundary
-    # # Make everything outside of the rectangular boundary 0
-    # u_inverted_coeff = copy.deepcopy(u_coef)
-    # u_inverted_coeff = u_inverted_coeff*peak_containers
+vertical_extent_coordx, vertical_extent_coordy = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
 
-    # v_inverted_coeff = copy.deepcopy(v_coef)
-    # v_inverted_coeff  = v_inverted_coeff*peak_containers
-
-    # t_inverted_coeff = copy.deepcopy(t_coef)
-    # t_inverted_coeff = t_inverted_coeff*peak_containers
-
-    # # [Torrence and Compo, 1998] Eqn 11 -- Inverse wavelet transform
-    # # Want to use the exact parameters used in the initial calculation of the wavelet coefficients
-    # u_div_scale = np.divide(u_inverted_coeff.T,np.sqrt(u_scales))
-    # v_div_scale= np.divide(v_inverted_coeff.T,np.sqrt(v_scales))
-    # t_div_scale = np.divide(t_inverted_coeff.T,np.sqrt(t_scales))
-
-    # # [Torrence and Compo, 1998] -- Table 2
-    # C_delta_morlet = 0.776 #  reconstruction factor
-    # psi0_morlet = np.pi**(1/4) # to remove energy scaling
-    # wavelet_constant = dj*np.sqrt(dt)/ (C_delta_morlet*psi0_morlet)
-
-    # u_inverted_coeff = np.multiply(u_div_scale.sum(axis=0),wavelet_constant)
-    # v_inverted_coeff = np.multiply(v_div_scale.sum(axis=0),wavelet_constant)
-    # t_inverted_coeff = np.multiply(t_div_scale.sum(axis=0),wavelet_constant)
-
-
-
-
-# [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
-# wind variance - the sum of the reconstructed u and v wavelet coefficients
-# horizontal_wind_variance = np.abs(u_inverted_coeff) ** 2 + np.abs(v_inverted_coeff) ** 2
-
-# # [Zink and Vincent, 2001] -- If the boundary of reconstructed wavelet coefficients overlap, horizontal wind variance is divided in equal parts
-# x1, y1, w, h = boundary_rows[0], boundary_cols[0], boundary_rows[1] - boundary_rows[0],  boundary_cols[1]  - boundary_cols[0]
-# x2,y2 = x1+w,y1+h
-
-# peaks_within_boundary = []
-# ## Find peaks within rectangular boundary:
-# for nom in peaks:
-#     if (x1 < nom[0] and nom[0] < x2):
-#             if (y1 < nom[1] and nom[1] < y2):
-#                 peaks_within_boundary.append(nom)
-                
-
-# def peaks_inside_rectangular_boundary(peaks, boundaries_for_rows, boundaries_for_cols):
-#     x1, x2 =  boundaries_for_rows
-#     y1, y2 =  boundaries_for_cols
-    
-#     # list to store peaks found inside rectangular boundary
-#     peaks_within_boundary = []
-
-#     for coords in peaks:
-#         if (x1 < coords[0] and coords[0] < x2):
-#                 if (y1 < coords[1] and coords[1] < y2):
-#                     peaks_within_boundary.append(coords)
         
-#     return peaks_within_boundary
-
-# def calculate_horizontal_wind_variance(,inverted_u_coeff, inverted_v_coeff,peaks_within_boundary_list,peaks,peak_nom):
-        
-#     # [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
-#     # wind variance - the sum of the reconstructed u and v wavelet coefficients
-#     horizontal_wind_variance = np.abs(inverted_u_coeff) ** 2 + np.abs(inverted_v_coeff) ** 2
-    
-#     # If peaks is equal to itself essentially, leave it be
-#     # If multiple peaks found inside boundary, divive horizontal wind variance among all the peaks
-#     if len(peaks_within_boundary_list)==1 and np.array(peaks_within_boundary_list[0] == peaks[peak_nom]).all():
-#         peaks_within_boundary_list = peaks[peak_nom]
-#         horizontal_wind_variance = horizontal_wind_variance
-#     else:
-#         horizontal_wind_variance = horizontal_wind_variance/len(peaks_within_boundary)
-#     return horizontal_wind_variance
-        
-
-# https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
-# Find the maximum value and index of maximum value
-max_value = np.max(horizontal_wind_variance)
-max_value_index = np.argmax(horizontal_wind_variance)
-# Find the half maximum
-half_max = max_value/2
-
-# Find the indices where the values are closest to half the maximum on both sides of the peak
-vertical_extent_coordx = next( ( i for i in range(max_value_index,-1,-1) if horizontal_wind_variance[i] <= half_max), 0)
-vertical_extent_coordy = next((i for i in range(max_value_index, len(horizontal_wind_variance)) if horizontal_wind_variance[i] <= half_max), len(horizontal_wind_variance) - 1)
 
 plt.figure()
 plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)

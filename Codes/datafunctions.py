@@ -572,10 +572,21 @@ def convert_seconds_to_timestamp(dataframe, initial_timestamp_for_flight):
 
 
 def peaks_inside_rectangular_boundary(peaks, boundaries_for_rows, boundaries_for_cols):
+    """
+    Determine if other local maxima are located within the rectangular boundary in question.
+    
+    Arguments:
+        peaks -- The list of all local maxima known.
+        boundaries_for_rows -- The indices associated with the length of the rectangular boundary.
+        boundaries_for_cols -- The indices associated with the height of the rectangular boundary.
+
+    Returns:
+        The list of indices associated with the local maxima located inside the rectangular boundary.
+    """    
     x1, x2 =  boundaries_for_rows
     y1, y2 =  boundaries_for_cols
     
-    # list to store peaks found inside rectangular boundary
+    # list to store lolca maxima found inside rectangular boundary
     peaks_within_boundary = []
 
     for coords in peaks:
@@ -586,35 +597,91 @@ def peaks_inside_rectangular_boundary(peaks, boundaries_for_rows, boundaries_for
     return peaks_within_boundary
 
 def calculate_horizontal_wind_variance(inverted_u_coeff, inverted_v_coeff,peaks_within_boundary_list,peaks,peak_nom):
-        
+    """
+    Calculate the horizontal wind variance, which is the sum of the reconstructed zonal and meridional wind perturbation
+    wavelet coefficients. According to [Zink and Vincent, 2001], if the rectangular boundaries of the reconstructed wavelet
+    coefficients overlap, the horizontal wind variance must be divided in equal parts among them.
+
+    Arguments:
+        inverted_u_coeff -- The reconstructed zonal wind perturbation.
+        inverted_v_coeff -- he reconstructed meridional wind perturbation.
+        peaks_within_boundary_list -- List of all the local maxima present within current rectangular boundary.
+        peaks -- The list of all known local maxima.
+        peak_nom -- The index of the local maxima being investigated.
+
+    Returns:
+        The horizontal wind variance [m^2/s^2].
+    """        
     # [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
-    # wind variance - the sum of the reconstructed u and v wavelet coefficients
+    # wind variance -- the sum of the reconstructed u and v wavelet coefficients
     horizontal_wind_variance = np.abs(inverted_u_coeff) ** 2 + np.abs(inverted_v_coeff) ** 2
     
-    # If peaks is equal to itself essentially, leave it be
-    # If multiple peaks found inside boundary, divive horizontal wind variance among all the peaks
+    # If peaks is equal to itself, leave it be
+    # If multiple peaks found inside boundary, divide horizontal wind variance among all the peaks equally
     if len(peaks_within_boundary_list)==1 and np.array(peaks_within_boundary_list[0] == peaks[peak_nom]).all():
         peaks_within_boundary_list = peaks[peak_nom]
         horizontal_wind_variance = horizontal_wind_variance
     else:
         horizontal_wind_variance = horizontal_wind_variance/len(peaks_within_boundary_list)
+        
     return horizontal_wind_variance
 
 
 def inverse_wavelet_transform(wavelet_coef,peak_containers,wavelet_scales,dj,dt):
+    """
+    Reconstruct the perturbations associated with the potential gravity wave packet 
+    through the inverse wavelet transform of the wavelet coefficients centered within the 
+    pre-determined rectangular boundary [Zink and Vincent, 2001].
+
+    Arguments:
+        wavelet_coef -- The wavelet coefficients computed from the wavelet transform for the perturbations.
+        peak_containers -- The array that contains the rectangular boundary around the wave packet.
+        wavelet_scales -- The scales computed from the wavelet transform.
+        dj -- The spacing between discrete scales.
+        dt -- The spatial resolution [m].
+
+    Returns:
+        The reconstructed perturbations associated with the wave packet at the local maxima.
+    """    
     
+    # Constants for the inverse wavelet transform
     # [Torrence and Compo, 1998] -- Table 2
     C_delta_morlet = 0.776 #  reconstruction factor
     psi0_morlet = np.pi**(1/4) # to remove energy scaling
+    # Want the exact parameters used in the initial calculation of the wavelet coefficients
     wavelet_constant = dj*np.sqrt(dt)/ (C_delta_morlet*psi0_morlet)
     
-    
     copied_wavelet_coef = copy.deepcopy(wavelet_coef)
+    
+    # All points outside of this rectangular boundary are 0
     copied_wavelet_coef = copied_wavelet_coef*peak_containers
-    
     wavelet_div_scale = np.divide(copied_wavelet_coef.T,np.sqrt(wavelet_scales))
-    
     copied_wavelet_coef = np.multiply(wavelet_div_scale.sum(axis=0),wavelet_constant)
+    
     return copied_wavelet_coef
 
+
+def wave_packet_FWHM_indices(horizontal_wind_variance):
+    """
+    The vertical extent of the wave packet is determined by the Full Width Half Max (FWHM) of 
+    the horizontal wind variance [Zink and Vincent, 2001].
+
+    Arguments:
+        horizontal_wind_variance -- The sum of the reconstructed wind perturbation wavelet coefficients [m^2/s^2].
+
+    Returns:
+        The indices representing the vertical extent of the wave packet.
+    """    
+    # https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
+    # Find the maximum value and index of maximum value of the horizontal wind variance
+    max_value = np.max(horizontal_wind_variance)
+    max_value_index = np.argmax(horizontal_wind_variance)
     
+    # Find the half maximum of the horizontal wind variance
+    half_max = max_value/2
+
+    # Find indices closest to the half maximum on either side of the local maximum.
+    vertical_extent_coordx = next( ( i for i in range(max_value_index,-1,-1) if horizontal_wind_variance[i] <= half_max), 0)
+    vertical_extent_coordy = next((i for i in range(max_value_index, len(horizontal_wind_variance)) if horizontal_wind_variance[i] <= half_max), len(horizontal_wind_variance) - 1)
+    
+    return vertical_extent_coordx, vertical_extent_coordy
