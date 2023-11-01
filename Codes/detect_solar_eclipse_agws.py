@@ -76,27 +76,34 @@ tropopause_height = 12000
 # to give a rise rate of 5 m/s
 spatial_resolution = 5 
 
-# spatial height interpolation limit [m]
+# Spatial height interpolation limit [m]
 # Tells code to not interpolate if there are more than [interpolation_limit] consecutive rows of missing/ NaN values
 # Interpolation starts anew after hitting the interpolation limit
 interpolation_limit = 1000
 
+# Cleaning up the data
 dat = datafunctions.clean_data(dat, tropopause_height, original_data_shape)
 
+# Interpolate the data
 dat = datafunctions.interpolate_data(dat, interpolation_limit)
 
+# Split dataset into multiple dataframes surrounding the gap of NaNs, if applicable
 data_sections = datafunctions.check_data_for_interpolation_limit_set(
     dat, interpolation_limit
 )
 
+# Set the spatial resolution for the dataset
 dat = datafunctions.set_spatial_resolution_for_data(data_sections, spatial_resolution)
 
+# Using the first part of the dataset
 choose_data_frame_analyze = dat[0]
 
+# Add in a new time column with the date and time in UTC
 choose_data_frame_analyze = datafunctions.convert_seconds_to_timestamp(choose_data_frame_analyze, starting_time_for_flight)
 
 ################### Zonal & Meridional Components of Wind Speed ###################
 
+# Grab the wind speeds and temperatures needed for analysis
 (
     u_zonal_speed,
     v_meridional_speed,
@@ -106,6 +113,7 @@ choose_data_frame_analyze = datafunctions.convert_seconds_to_timestamp(choose_da
 
 ################### Calculate First-Order Perturbations ###################
 
+# Fit the wind speeds and the temperature 
 v_meridional_fit = datafunctions.compute_second_order_polynomial_fits(
     choose_data_frame_analyze, v_meridional_speed, 2
 )
@@ -118,6 +126,7 @@ temperature_fit = datafunctions.compute_second_order_polynomial_fits(
     choose_data_frame_analyze, temperature, 2
 )
 
+# Subtract the polynomial fits from the original vertical profiles to obtain the first-order perturbations
 u_zonal_perturbations = datafunctions.derive_first_order_perturbations(
     choose_data_frame_analyze, u_zonal_speed, u_zonal_fit
 )
@@ -130,6 +139,7 @@ temperature_perturbations = datafunctions.derive_first_order_perturbations(
     choose_data_frame_analyze, temperature, temperature_fit
 )
 
+# Quick Plot
 plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     choose_data_frame_analyze["Geopot [m]"],
     u_zonal_speed,
@@ -212,10 +222,11 @@ coiMask = np.array(
     ]
 ).T
 
-coi_1d =  v_coi #+ u_coi
+coi_1d =  v_coi + u_coi
 
 ################### Find Local Maxima & Extract Boundaries Around Gravity Wave Packet ###################
 
+# Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
 peak_nom = 1
@@ -228,8 +239,8 @@ associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[p
 associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom][1]] # TimeStamp [UTC]
 
 
-height_index_of_max_local_power = peaks[peak_nom][1]
-scale_index_of_max_local_power = peaks[peak_nom][0]
+z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to the height
+a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the vertical wavelength
 
 ################### Plot Power Surface ###################
 
@@ -465,11 +476,12 @@ inverse_axialratio = np.abs(1/ axial_ratio)
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency -- frequency observed in the reference frame moving with the background wind
 intrinsic_frequency = f_coriolis * inverse_axialratio
 
-
+if intrinsic_frequency > mean_buoyancy_frequency:
+    print("Intrinsic frequency of wave packet greater than the Brunt-Vaisala frequency...not possible")
 
 # vertical wavenumber and wavelength
-vertical_wavenumber = (2 * np.pi) / u_periods[scale_index_of_max_local_power] # [1/m]
-vertical_wavelength = u_periods[scale_index_of_max_local_power] # [m]
+vertical_wavenumber = (2 * np.pi) / u_periods[a_index_of_max_local_power] # [1/m]
+vertical_wavelength = u_periods[a_index_of_max_local_power] # [m]
 
 
 # horizontal wavenumber and wavelength [Murphy et al, 2014] -- Eqn B2
@@ -526,7 +538,15 @@ cgy = l*mean_buoyancy_frequency**2/(intrinsic_frequency*vertical_wavenumber**2)
 # intrinsic horizontal group velocity [m/s] -- [Murphy et al, 2014] -- Table 2
 cgh = np.sqrt(cgx**2 + cgy**2)
 
+# Ideal gas law
+# specific gas constant of dry air
+Rconst = 287 # J/kg/K
+rho = (choose_data_frame_analyze["P [hPa]"]**100)/(Rconst *temperature_K) # density [kg/m^3]
 
+# momentum flux [Pa]
+zonal_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iu_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])
+
+meridional_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iv_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])
 
 
 data_dictionary = {}

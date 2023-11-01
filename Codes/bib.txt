@@ -56,6 +56,8 @@ Journals:
 
 [Eckermann and Vincent, 1989] -- https://link.springer.com/article/10.1007/BF00874472
 
+[Moffat-Griffin et al., 2011b] -- https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/jgrd.50859
+
 check out:
 
 https://amt.copernicus.org/articles/13/479/2020/amt-13-479-2020.pdf
