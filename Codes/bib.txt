@@ -63,3 +63,12 @@ check out:
 https://amt.copernicus.org/articles/13/479/2020/amt-13-479-2020.pdf
 https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2018JD029164
 https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2015JD023505
+
+
+
+# [Sato and Yamada ,1994] -- horizontal wind component is counterclockwise perpendicular to intrinsic phase velocity
+# m positive; T antiphase with horizontal wind
+# m negative; T in phase with horizontal wind
+
+https://journals.ametsoc.org/view/journals/atsc/59/8/1520-0469_2002_059_1394_lvoigw_2.0.co_2.xml?tab_body=pdf
+The Coriolis parameter f sets the low intrinsic frequency limit for gravity waves. 

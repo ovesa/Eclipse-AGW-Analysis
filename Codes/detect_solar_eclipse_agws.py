@@ -474,7 +474,9 @@ axial_ratio = np.tan(eta)
 inverse_axialratio = np.abs(1/ axial_ratio)
 
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency -- frequency observed in the reference frame moving with the background wind
-intrinsic_frequency = f_coriolis * inverse_axialratio
+intrinsic_frequency = f_coriolis * inverse_axialratio # [rad/s]
+
+intrinsic_period = 2*np.pi/intrinsic_frequency # [s]
 
 if intrinsic_frequency > mean_buoyancy_frequency:
     print("Intrinsic frequency of wave packet greater than the Brunt-Vaisala frequency...not possible")
