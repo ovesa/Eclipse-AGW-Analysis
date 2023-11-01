@@ -504,6 +504,7 @@ def find_local_maxima(power_array, threshold_val, coi, sig):
     sig_mask = copy.deepcopy(sig)
     peaks = peaks[[sig_mask[tuple(x)] for x in peaks]]
 
+    print("\n")
     print("Found %s peaks within cone of influence & significance" % (peaks.shape[0]))
     return peaks
 
@@ -567,3 +568,53 @@ def convert_seconds_to_timestamp(dataframe, initial_timestamp_for_flight):
     column_to_move =  dataframe.pop("Time [UTC]")
     dataframe.insert(1, "Time [UTC]", column_to_move )
     return dataframe
+
+
+
+def peaks_inside_rectangular_boundary(peaks, boundaries_for_rows, boundaries_for_cols):
+    x1, x2 =  boundaries_for_rows
+    y1, y2 =  boundaries_for_cols
+    
+    # list to store peaks found inside rectangular boundary
+    peaks_within_boundary = []
+
+    for coords in peaks:
+        if (x1 < coords[0] and coords[0] < x2):
+                if (y1 < coords[1] and coords[1] < y2):
+                    peaks_within_boundary.append(coords)
+        
+    return peaks_within_boundary
+
+def calculate_horizontal_wind_variance(inverted_u_coeff, inverted_v_coeff,peaks_within_boundary_list,peaks,peak_nom):
+        
+    # [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
+    # wind variance - the sum of the reconstructed u and v wavelet coefficients
+    horizontal_wind_variance = np.abs(inverted_u_coeff) ** 2 + np.abs(inverted_v_coeff) ** 2
+    
+    # If peaks is equal to itself essentially, leave it be
+    # If multiple peaks found inside boundary, divive horizontal wind variance among all the peaks
+    if len(peaks_within_boundary_list)==1 and np.array(peaks_within_boundary_list[0] == peaks[peak_nom]).all():
+        peaks_within_boundary_list = peaks[peak_nom]
+        horizontal_wind_variance = horizontal_wind_variance
+    else:
+        horizontal_wind_variance = horizontal_wind_variance/len(peaks_within_boundary_list)
+    return horizontal_wind_variance
+
+
+def inverse_wavelet_transform(wavelet_coef,peak_containers,wavelet_scales,dj,dt):
+    
+    # [Torrence and Compo, 1998] -- Table 2
+    C_delta_morlet = 0.776 #  reconstruction factor
+    psi0_morlet = np.pi**(1/4) # to remove energy scaling
+    wavelet_constant = dj*np.sqrt(dt)/ (C_delta_morlet*psi0_morlet)
+    
+    
+    copied_wavelet_coef = copy.deepcopy(wavelet_coef)
+    copied_wavelet_coef = copied_wavelet_coef*peak_containers
+    
+    wavelet_div_scale = np.divide(copied_wavelet_coef.T,np.sqrt(wavelet_scales))
+    
+    copied_wavelet_coef = np.multiply(wavelet_div_scale.sum(axis=0),wavelet_constant)
+    return copied_wavelet_coef
+
+    

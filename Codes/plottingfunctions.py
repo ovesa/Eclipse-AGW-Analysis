@@ -151,7 +151,7 @@ def plot_power_surface(
     periods,
     peak_container,
     signif,
-    coi,coi_1d,
+    coi,
     peaks,
     colormap,
     time,
