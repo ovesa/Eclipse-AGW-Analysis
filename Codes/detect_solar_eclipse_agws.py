@@ -45,7 +45,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = -1
+file_nom = 0
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -229,7 +229,7 @@ coi_1d =  v_coi + u_coi
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 1
+peak_nom = 0
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
@@ -295,16 +295,62 @@ t_inverted_coeff = np.multiply(t_div_scale.sum(axis=0),wavelet_constant)
 
 # [Zink and Vincent, 2001] -- vertical extent: the FWHM of the horizontal wind variance
 # wind variance - the sum of the reconstructed u and v wavelet coefficients
-horizonatal_windvariance = np.abs(u_inverted_coeff) ** 2 + np.abs(v_inverted_coeff) ** 2
-max_horizonatal_windvariance = np.max(horizonatal_windvariance)
-FWHM_variance = np.where(horizonatal_windvariance >= 0.5*max_horizonatal_windvariance)[0]
+horizontal_wind_variance = np.abs(u_inverted_coeff) ** 2 + np.abs(v_inverted_coeff) ** 2
 
-vertical_extent_coordx, vertical_extent_coordy = FWHM_variance[0],FWHM_variance[-1]
 
+# https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
+# Find the maximum value
+max_value = np.max(horizontal_wind_variance)
+max_value_index = np.argmax(horizontal_wind_variance)
+
+# Find the half maximum
+half_max = max_value/2
+# https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
+# Find the indices where the values are closest to half the maximum on both sides of the peak
+left_index = next( ( i for i in range(max_value_index,-1,-1) if horizontal_wind_variance[i] <= half_max), 0)
+right_index = next((i for i in range(max_value_index, len(horizontal_wind_variance)) if horizontal_wind_variance[i] <= half_max), len(horizontal_wind_variance) - 1)
+
+plt.figure()
+plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k')
+plt.scatter(left_index, horizontal_wind_variance[left_index], s= 30, zorder=1, color='red', edgecolor='k')
+plt.scatter(right_index, horizontal_wind_variance[right_index], s=30, zorder=1, color='red', edgecolor='k')
+plt.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30, zorder=1, color='gold', edgecolor='k')
+plt.axhline(y=half_max, linestyle='--', color='navy')
+plt.xlim([max_value_index-100,max_value_index+100])
+plt.tight_layout()
+plt.show()
+
+
+# # def get_full_width(x: np.ndarray, y: np.ndarray, height: float = 0.5) -> float:
+
+# y = horizontal_wind_variance
+# x = np.arange(len(horizontal_wind_variance))
+# x_low = int(np.interp(half_max, y[:max_value_index+1], x[:max_value_index+1]))
+# x_high = round(np.interp(half_max, np.flip(y[max_value_index:]), np.flip(x[max_value_index:])))
+
+
+
+# plt.figure()
+# plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)
+# plt.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30,  color='gold', edgecolor='k',zorder=1,)
+# plt.scatter(x_low,horizontal_wind_variance[(x_low)])
+# plt.scatter(x_high,horizontal_wind_variance[(x_high)])
+
+# plt.axhline(y=half_max, linestyle='--', color='navy')
+# plt.xlim([max_value_index-100,max_value_index+100])
+# plt.ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
+# plt.xlabel("Arb")
+# plt.tight_layout()
+# plt.show()
+
+
+ 
+ 
+vertical_extent_coordx, vertical_extent_coordy = left_index,right_index
 # The reconstructed wind and temperature paramters based on the full width half max
-iu_wave = (u_inverted_coeff)[FWHM_variance]
-iv_wave = (v_inverted_coeff)[FWHM_variance]
-it_wave = (t_inverted_coeff)[FWHM_variance]
+iu_wave = (u_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
+iv_wave = (v_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
+it_wave = (t_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 
 ################### Hodograph Analysis ###################
 
@@ -342,6 +388,11 @@ mean_buoyancy_frequency = mean_buoyancy_frequency[vertical_extent_coordx:vertica
 # Mean buoyancy period
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
 
+## other checck
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/97JD03325
+#limit
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448 figure 1b
+#mean_buoyancy_frequency > intrinsic_frequency > intrinsic_frequency
 
 ## Stokes parameters for gravity waves
 # Eqn. 9 from [Pfenninger et. al, 1999]
@@ -552,3 +603,4 @@ meridional_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyan
 
 
 data_dictionary = {}
+
