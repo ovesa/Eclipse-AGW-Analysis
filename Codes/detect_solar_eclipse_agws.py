@@ -267,25 +267,15 @@ u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,peak_container
 v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,peak_containers,v_scales,dj,dt)
 t_inverted_coeff = datafunctions.inverse_wavelet_transform(t_coef,peak_containers,t_scales,dj,dt)
 
+# Calculate the horizontal wind variance [m^2/s^2]
 horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_inverted_coeff, v_inverted_coeff,peaks_within_boundaries,peaks,peak_nom)
 
-vertical_extent_coordx, vertical_extent_coordy = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
+# [Zink and Vincent, 2001] -- vertical extent of the gravity wave packet is associated with the FWHM of the horizontal wind variance
+vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max  = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
 
-        
+plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max)
 
-plt.figure()
-plt.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)
-plt.scatter(vertical_extent_coordx, horizontal_wind_variance[vertical_extent_coordx], s= 30, color='red', edgecolor='k',zorder=1)
-plt.scatter(vertical_extent_coordy, horizontal_wind_variance[vertical_extent_coordy], s=30,  color='red', edgecolor='k',zorder=1)
-plt.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30,  color='gold', edgecolor='k',zorder=1)
-plt.axhline(y=half_max, linestyle='--', color='navy')
-plt.xlim([max_value_index-100,max_value_index+100])
-plt.ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
-plt.xlabel("Arb")
-plt.tight_layout()
-plt.show()
-
-# The reconstructed wind and temperature paramters based on the full width half max
+# Only consider the perturbations associated with the vertical extent of the wave packet
 iu_wave = (u_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 iv_wave = (v_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 it_wave = (t_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
@@ -293,7 +283,7 @@ it_wave = (t_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 ################### Hodograph Analysis ###################
 
 plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
-# plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
+plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
 
 ################### Extracting Wave Parameters ###################
 
@@ -301,7 +291,7 @@ plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_an
 grav_constant = 9.81  # gravity [m/s^2]
 ps = 1000  # standard pressure [hPa] -- equal to 1 millibar
 kappa = 2 / 7 # Poisson constant for dry air 
-celsius_to_kelvin_conversion = 273.15 # 0 deg Celsius == 273.15 K
+celsius_to_kelvin_conversion = 273.15 # 0 deg Celsius = 273.15 K
 
 # Convert temperature array from Celsium to Kelvin
 temperature_K =  (choose_data_frame_analyze["T [°C]"] + celsius_to_kelvin_conversion)

@@ -670,7 +670,7 @@ def wave_packet_FWHM_indices(horizontal_wind_variance):
         horizontal_wind_variance -- The sum of the reconstructed wind perturbation wavelet coefficients [m^2/s^2].
 
     Returns:
-        The indices representing the vertical extent of the wave packet.
+        The indices representing the vertical extent of the wave packet, the index associated with the maximum value, and the value of the half maximum.
     """    
     # https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
     # Find the maximum value and index of maximum value of the horizontal wind variance
@@ -684,4 +684,4 @@ def wave_packet_FWHM_indices(horizontal_wind_variance):
     vertical_extent_coordx = next( ( i for i in range(max_value_index,-1,-1) if horizontal_wind_variance[i] <= half_max), 0)
     vertical_extent_coordy = next((i for i in range(max_value_index, len(horizontal_wind_variance)) if horizontal_wind_variance[i] <= half_max), len(horizontal_wind_variance) - 1)
     
-    return vertical_extent_coordx, vertical_extent_coordy
+    return vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max
