@@ -550,7 +550,7 @@ def extract_boundaries_around_peak(power_array, peaks, peak_nom):
     # The area pertaining to the boundary of the identified AGW packet is set as True.
     peak_containers[row_coords[:, np.newaxis], col_coords] = True
 
-    return peak_containers,[row_coords[0],row_coords[-1]], [col_coords[0],col_coords[-1]]
+    return peak_containers,[row_coords], [col_coords]
 
 
 
@@ -659,7 +659,9 @@ def inverse_wavelet_transform(wavelet_coef,peak_containers,wavelet_scales,dj,dt)
     # All points outside of this rectangular boundary are 0
     copied_wavelet_coef = copied_wavelet_coef*peak_containers
     wavelet_div_scale = np.divide(copied_wavelet_coef.T,np.sqrt(wavelet_scales))
-    copied_wavelet_coef = np.multiply(wavelet_div_scale.sum(axis=0),wavelet_constant)
+    
+    # Sum over all scales -- NOTE order of dimensions swamped
+    copied_wavelet_coef = np.multiply(wavelet_div_scale.sum(axis=1),wavelet_constant)
     
     return copied_wavelet_coef
 

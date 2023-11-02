@@ -122,10 +122,11 @@ def plot_vertical_profiles_with_residual_perturbations(
     axs[2, 1].set_xlabel("Residual [C]")
 
     for ax in [axs[0, 0], axs[1, 0], axs[2, 0]]:
-        ax.set(ylabel="Altitude [m]")
+        ax.set(ylabel="Altitude [km]")
         ax.yaxis.get_ticklocs(minor=True)
         ax.xaxis.get_ticklocs(minor=True)
         ax.minorticks_on()
+        ax.set_ylim([height.min(),height.max()])
 
 
     plt.tight_layout()
@@ -337,7 +338,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
     Arguments:
         zonal_wind_perturbation -- Zonal wind perturbation corresponding to the gravity wave packet [m/s].
         meridional_wind_perturbation -- Meridional wind perturbation corresponding to the gravity wave packet [m/s].
-        dataframe -- The Pandas DataFrame.
+        dataframe -- The Pandas height series [km].
 
     Returns:
         A figure.
@@ -345,6 +346,8 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
 
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
     ax.plot(zonal_wind_perturbation, meridional_wind_perturbation, color="k", linewidth=1.5, linestyle='--',zorder=0)
+    
+    ax.set_title("Hodograph Analysis")
 
     ax.scatter(
         zonal_wind_perturbation[0],
@@ -356,7 +359,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
     )
 
     ax.annotate(
-        "%.2f km" % (dataframe["Geopot [m]"].iloc[0] / 1000), 
+        "%.2f km" % (dataframe.iloc[0]), 
        xy= (zonal_wind_perturbation[0], meridional_wind_perturbation[0]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     )
     
@@ -371,7 +374,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
     )
 
     ax.annotate(
-        "%.2f km" % (dataframe["Geopot [m]"].iloc[middle_x_point] / 1000), 
+        "%.2f km" % (dataframe.iloc[middle_x_point]), 
        xy= (zonal_wind_perturbation[middle_x_point], meridional_wind_perturbation[middle_x_point]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     )
 
@@ -385,7 +388,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
     )
 
     ax.annotate(
-        "%.2f km" % (dataframe["Geopot [m]"].iloc[-1] / 1000),
+        "%.2f km" % (dataframe.iloc[-1]),
         xy=(zonal_wind_perturbation[-1], meridional_wind_perturbation[-1]) , xycoords='data',xytext=(3, 1), textcoords='offset points',
     )
 

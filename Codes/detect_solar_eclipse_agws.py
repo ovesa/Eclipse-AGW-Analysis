@@ -44,7 +44,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 0
+file_nom = 5
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -112,40 +112,43 @@ choose_data_frame_analyze = datafunctions.convert_seconds_to_timestamp(choose_da
     temperature,
 ) = datafunctions.extract_wind_components_and_temperature(choose_data_frame_analyze)
 
-# Grab the height array
-height_array = choose_data_frame_analyze["Geopot [m]"]
+# Grab the height array in km
+height_km = choose_data_frame_analyze["Geopot [m]"]/1000 # [km]
+
+# Grab time array in UTC
+time_UTC = choose_data_frame_analyze["Time [UTC]"]
 
 ################### Calculate First-Order Perturbations ###################
 
 # Fit the wind speeds and the temperature 
 v_meridional_fit = datafunctions.compute_polynomial_fits(
-    choose_data_frame_analyze, v_meridional_speed, 2
+    height_km, v_meridional_speed, 2
 )
 
 u_zonal_fit = datafunctions.compute_polynomial_fits(
-    choose_data_frame_analyze, u_zonal_speed, 2
+    height_km, u_zonal_speed, 2
 )
 
 temperature_fit = datafunctions.compute_polynomial_fits(
-    choose_data_frame_analyze, temperature, 2
+    height_km, temperature, 2
 )
 
 # Subtract the polynomial fits from the original vertical profiles to obtain the first-order perturbations
 u_zonal_perturbations = datafunctions.derive_first_order_perturbations(
-    choose_data_frame_analyze, u_zonal_speed, u_zonal_fit
+    height_km, u_zonal_speed, u_zonal_fit
 )
 
 v_meridional_perturbations = datafunctions.derive_first_order_perturbations(
-    choose_data_frame_analyze, v_meridional_speed, v_meridional_fit
+    height_km, v_meridional_speed, v_meridional_fit
 )
 
 temperature_perturbations = datafunctions.derive_first_order_perturbations(
-    choose_data_frame_analyze, temperature, temperature_fit
+    height_km, temperature, temperature_fit
 )
 
 # Quick Plot of First-Order Perturbations Vertical Profiles
 plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
-    choose_data_frame_analyze["Geopot [m]"],
+    height_km,
     u_zonal_speed,
     v_meridional_speed,
     temperature,
@@ -178,13 +181,13 @@ mother_wavelet = "MORLET"
 # Imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
 # Modulus is envelope of signal
 u_coef, u_periods, u_scales, u_coi = datafunctions.compute_wavelet_components(
-    u_zonal_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
+    u_zonal_perturbations, dj, dt, s0, mother_wavelet, padding
 )
 v_coef, v_periods, v_scales, v_coi = datafunctions.compute_wavelet_components(
-    v_meridional_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
+    v_meridional_perturbations, dj, dt, s0, mother_wavelet, padding
 )
 t_coef, t_periods, t_scales, t_coi = datafunctions.compute_wavelet_components(
-    temperature_perturbations, dj, dt, s0, mother_wavelet, spatial_resolution, padding
+    temperature_perturbations, dj, dt, s0, mother_wavelet, padding
 )
 
 # [Koushik et al, 2019] -- Power surface is sum of squares of the U and V wavelet transformed surfaces
@@ -231,15 +234,15 @@ coiMask = np.array(
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 3
+peak_nom = 5
 
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
-associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
-associated_height_range_of_boundary =  choose_data_frame_analyze["Geopot [m]"].iloc[boundary_cols] # m
+# associated_timestamps_range_of_boundary = time_UTC.iloc[boundary_cols] # TimeStamps [UTC]
+# associated_height_range_of_boundary =  height_km.iloc[boundary_cols] # m
 
-associated_height_of_peak = choose_data_frame_analyze["Geopot [m]"].iloc[peaks[peak_nom][1]] # m
-associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[peak_nom][1]] # TimeStamp [UTC]
+# associated_height_of_peak = height_km.iloc[peaks[peak_nom][1]] # m
+# associated_time_of_peak = time_UTC.iloc[peaks[peak_nom][1]] # TimeStamp [UTC]
 
 z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to index of the max height
 a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the index of the max vertical wavelength
@@ -279,16 +282,18 @@ horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_in
 vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max  = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
 
 # Quick plot of the horizontal wind variance
-# plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max)
+plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max)
 
 # Only consider the perturbations associated with the vertical extent of the wave packet
 iu_wave = (u_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 iv_wave = (v_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 it_wave = (t_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 
+# The height array within the vertical bounds of the wave packet
+height_km_vertical_bounds = height_km.iloc[vertical_extent_coordx:vertical_extent_coordy]
 ################### Hodograph Analysis ###################
 
-plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
+plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,height_km_vertical_bounds)
 # plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
 
 ################### Extracting Wave Parameters ###################
@@ -322,7 +327,6 @@ else:
 if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
     print("\n")
     print("Might not be an AGW; representative of poor wave activity")
-
 
 # degree of polarization -- stastical measure of the coherence of the wave field
 polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
