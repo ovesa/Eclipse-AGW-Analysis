@@ -44,7 +44,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 5
+file_nom = 6
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -70,10 +70,10 @@ print("\n")
 ################### Preprocess and Interpolate Data ###################
 
 # tropopause height [m]
-tropopause_height = 12000 
+tropopause_height = 13000 
 
 # to give a rise rate of 5 m/s
-spatial_resolution = 4
+spatial_resolution = 5
 
 # Spatial height interpolation limit [m]
 # Tells code to not interpolate if there are more than [interpolation_limit] consecutive rows of missing/ NaN values
@@ -234,7 +234,7 @@ coiMask = np.array(
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 5
+peak_nom = 7
 
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
@@ -248,7 +248,7 @@ z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to index of the ma
 a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the index of the max vertical wavelength
 
 # Determine if other local maxima are found within the rectangualr boundary
-peaks_within_boundaries = datafunctions.peaks_inside_rectangular_boundary(peaks, boundary_rows, boundary_cols)
+peaks_within_boundaries = datafunctions.peaks_inside_rectangular_boundary(peaks, [boundary_rows[0],boundary_rows[-1]], [boundary_cols[0],boundary_cols[-1]])
 
 ################### Plot Power Surface ###################
 
@@ -545,25 +545,8 @@ print('Fitted parameters:')
 print('a, b, c, d, e, f =', coeffs)
 x0, y0, ap, bp, e, phi = datafunctions.cart_to_pol(coeffs)
 print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
-
-plt.plot(iu_wave.real,iv_wave.real, 'x')     # given points
-xn, yn = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
-plt.plot(xn, yn)
-plt.plot(x0,y0,color='r',marker='x')
-plt.axhline(y=y0,linestyle='--', color='k')
-plt.axvline(x=x0,linestyle='--', color='k')
-
-# mag = axial_ratio
-# U = mag * np.cos( np.deg2rad(phase_difference_gamma_in_degrees ) )
-# V = mag * np.sin( np.deg2rad(phase_difference_gamma_in_degrees ) )
-
-# plt.quiver(x0,y0, U, V, color='r', width=0.003)
-
-# mag = inverse_axial_ratio
-# U = mag * np.cos( theta ) 
-# V = mag * np.sin( theta ) 
-# plt.quiver(x0,y0, U, V, color='k', width=0.003)
+fit_u, fit_v = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
 
 
 
-plt.show()
+plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0)

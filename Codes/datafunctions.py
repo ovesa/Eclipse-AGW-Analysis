@@ -441,6 +441,8 @@ def get_boundaries(
     return coords
 
 
+
+
 def compute_wavelet_components(array, dj,dt, s0,mother_wavelet, padding):
     """
     Calculate the wavelet coefficients of the first-order perturbations [Zink and Vincent, 2001]. 
@@ -550,7 +552,7 @@ def extract_boundaries_around_peak(power_array, peaks, peak_nom):
     # The area pertaining to the boundary of the identified AGW packet is set as True.
     peak_containers[row_coords[:, np.newaxis], col_coords] = True
 
-    return peak_containers,[row_coords], [col_coords]
+    return peak_containers,row_coords, col_coords
 
 
 

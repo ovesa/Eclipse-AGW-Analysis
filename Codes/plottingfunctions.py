@@ -407,26 +407,92 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
 def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max):
     """
     Plot the horizontal wind variance, identifying the peak, the FWHM, and the points associated with the FWHM.
-
-    Arguments:
-        horizontal_wind_variance -- The horizontal wind variance [m^2/s^2].
-        vertical_extent_coordx -- The index of the point associated with the FWHM to the left of the local maximum.
-        vertical_extent_coordy -- The index of the point associated with the FWHM to the right of the local maximum.
-        max_value_index -- The index corresponding to the local max.
-        half_max -- The value of the half maximum.
+zonal_wind_perturbation
 
     Returns:
         A figure.
     """
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
+    ax.set_title("Detect FWHM")
     ax.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)
-    ax.scatter(vertical_extent_coordx, horizontal_wind_variance[vertical_extent_coordx], s= 30, color='red', edgecolor='k',zorder=1)
-    ax.scatter(vertical_extent_coordy, horizontal_wind_variance[vertical_extent_coordy], s=30,  color='red', edgecolor='k',zorder=1)
-    ax.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=30,  color='gold', edgecolor='k',zorder=1)
-    ax.axhline(y=half_max, linestyle='--', color='navy')
-    ax.set_xlim([max_value_index-100,max_value_index+100])
+    ax.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=40,  color='gold', edgecolor='k',zorder=1)
+    ax.axhline(y=half_max, linestyle='--', color='k',linewidth=0.8)
+    ax.axvspan(vertical_extent_coordx,vertical_extent_coordy, facecolor='pink', alpha=0.5)
+    ax.scatter(vertical_extent_coordx, horizontal_wind_variance[vertical_extent_coordx], s=40, color='red', edgecolor='k',zorder=1)
+    ax.scatter(vertical_extent_coordy, horizontal_wind_variance[vertical_extent_coordy], s=40,  color='red', edgecolor='k',zorder=1)
+
+
+    ax.set_xlim([vertical_extent_coordx-100,vertical_extent_coordy+100])
     ax.set_ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
-    ax.set_xlabel("Arb")
+    ax.set_xlabel("Vertical Extent [indices]")
     fig.tight_layout()
     
     return fig
+
+
+def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_perturbation,dataframe, fitted_zonal_comps,fitted_meridional_comps,centerx,centery):
+    fig, ax = plt.subplots(1,1,figsize=[8, 6])  
+
+    ax.scatter(zonal_wind_perturbation, meridional_wind_perturbation, color='k', s=15, marker='x', zorder=1,label="Data")
+    ax.plot(fitted_zonal_comps, fitted_meridional_comps, color='pink', linewidth=3,zorder=0, label="Ellipse Fit")
+    ax.axhline(y=centery,linestyle='--',  color='b', linewidth=0.5, zorder=1)
+    ax.axvline(x=centerx,linestyle='--', color='b', linewidth=0.5, zorder=1)
+    ax.scatter(centerx,centery,color='k',marker='x',s=30,zorder=1)
+
+    ax.legend(loc='best')
+
+    ax.scatter(
+        zonal_wind_perturbation[0],
+        meridional_wind_perturbation[0],
+        color="r",
+        marker="o",
+        s=35,
+        zorder=1, edgecolor='k'
+    )
+
+    ax.annotate(
+        "%.2f km" % (dataframe.iloc[0]), 
+       xy= (zonal_wind_perturbation[0], meridional_wind_perturbation[0]), xycoords='data',xytext=(3, 1), textcoords='offset points',
+    )
+    
+    middle_x_point, middle_y_point = len(zonal_wind_perturbation)//2, len(meridional_wind_perturbation)//2
+    ax.scatter(
+        zonal_wind_perturbation[middle_x_point],
+        meridional_wind_perturbation[middle_y_point],
+        color="b",
+        marker="o",
+        s=35,
+        zorder=1, edgecolor='k'
+    )
+
+    ax.annotate(
+        "%.2f km" % (dataframe.iloc[middle_x_point]), 
+       xy= (zonal_wind_perturbation[middle_x_point], meridional_wind_perturbation[middle_x_point]), xycoords='data',xytext=(3, 1), textcoords='offset points',
+    )
+
+    ax.scatter(
+        zonal_wind_perturbation[-1],
+        meridional_wind_perturbation[-1],
+        color="gold",
+        marker="o",
+        s=35,
+        zorder=1, edgecolor='k',
+    )
+
+    ax.annotate(
+        "%.2f km" % (dataframe.iloc[-1]),
+        xy=(zonal_wind_perturbation[-1], meridional_wind_perturbation[-1]) , xycoords='data',xytext=(3, 1), textcoords='offset points',
+    )
+
+    ax.set_xlabel("Zonal Wind Speed [m/s]")
+    ax.set_ylabel("Meridional Wind Speed [m/s]")
+    
+    ax.yaxis.get_ticklocs(minor=True)
+    ax.xaxis.get_ticklocs(minor=True)
+
+    ax.minorticks_on()
+    fig.tight_layout()
+        
+    return fig
+
+
