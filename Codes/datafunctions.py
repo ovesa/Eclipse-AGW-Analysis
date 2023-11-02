@@ -239,8 +239,7 @@ def check_data_for_interpolation_limit_set(dataframe, interpolation_limit):
     # of NaNs
     nan_indices = nan_indices + [val + 1 for val in nan_indices]
 
-    # Split DataFrame
-    # Split DataFrames are now in a list
+    # Split DataFrame -- now in a list
     dataframe = [
         data
         for data in np.split(dataframe, nan_indices)
@@ -355,12 +354,15 @@ def compute_polynomial_fits(dataframe, array, order=2):
     Returns:
         A vector of the polynomial coefficients that minimizes the squared error.
     """
+    
+    # Ensure that only finite values are being incorporated into the fit
+    # Fails when there are NaN values
     idx = np.isfinite(dataframe) & np.isfinite(array)
     array_fit = np.polyfit(dataframe[idx], array[idx], order)
 
     return array_fit
 
-def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
+def derive_first_order_perturbations(height_km, perturbations, polynomial_fit):
     """
     Derive the first-order perturbations, which are thought to caused by atmospheric gravity waves
     [Moffat-Griffin et. al, 2011]. After computing the least squares polynomial fit for the
@@ -369,7 +371,7 @@ def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
     & [Vincent and Alexander, 2000].
 
     Arguments:
-        dataframe -- The Pandas height series.
+        height_km -- The Pandas height series.
         perturbations -- The perturbation array to compute the polynomial fit on.
         polynomial_fit -- A vector of the polynomial coefficients that minimizes the squared error.
 
@@ -380,8 +382,8 @@ def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
     # Apply polynomia fit then subtract from main vertical profile to remove background states
     # Don't need to create a new array because we are using the recently created evenly spaced height grid
     first_order_perturbations = perturbations - (
-        polynomial_fit[0] * dataframe ** 2
-        + polynomial_fit[1] * dataframe
+        polynomial_fit[0] * height_km ** 2
+        + polynomial_fit[1] * height_km
         + polynomial_fit[2] * np.ones(len(perturbations))
     )
 
@@ -429,6 +431,7 @@ def get_boundaries(
         The boundaries around each row and column where the power surface value falls to one-fourth
         its value or rises again.
     """
+    
     # For each row and column where the local maxima is, we need to find the local minima around it
     # In other words, we need to find the first minima on either side of the local max
     minima = np.array(argrelmin(signal))
@@ -446,8 +449,6 @@ def get_boundaries(
         minima[np.where(minima == coord)[0] + 1][0] + 1,
     )
     return coords
-
-
 
 
 def compute_wavelet_components(array, dj,dt, s0,mother_wavelet, padding):
@@ -503,23 +504,23 @@ def find_local_maxima(power_array, threshold_val, coi, sig):
     # [Zink and Vincent, 2001] -- Discard values less than 0.01 m^2/s^2 as these are usually noise
     # peak_local_max does the threshold as > 0.01 m^2/s^2, so use 0.011 m^2/s^2 to ignore values equal to 0.01 m^2/s^2
     # Scan the power surface (vertical wavelength-height) for the local maxima
-    peaks = peak_local_max(power_array, threshold_abs=threshold_val)
+    local_max_coords = peak_local_max(power_array, threshold_abs=threshold_val)
 
     # filter local maxima within cone of influence and significance interval
     coi_mask = copy.deepcopy(coi)
-    peaks = peaks[[coi_mask[tuple(x)] for x in peaks]]
+    local_max_coords = local_max_coords[[coi_mask[tuple(x)] for x in local_max_coords]]
 
     sig_mask = copy.deepcopy(sig)
-    peaks = peaks[[sig_mask[tuple(x)] for x in peaks]]
+    local_max_coords = local_max_coords[[sig_mask[tuple(x)] for x in local_max_coords]]
 
     print("\n")
-    print("Found %s local maxima within cone of influence & significance" % (peaks.shape[0]))
+    print("Detected %s local maxima within cone of influence & significance" % (local_max_coords.shape[0]))
     print("\n")
 
-    return peaks
+    return local_max_coords
 
 
-def extract_boundaries_around_peak(power_array, peaks, peak_nom):
+def extract_boundaries_around_peak(power_array, local_max_coords, peak_nom):
     """
     Determine the boundaries of the AGW packets in vertical wavelength-height space. Scan the 
     power surface (vertical wavelength-height) for the boundaries pertaining to when the value of the power
@@ -528,15 +529,15 @@ def extract_boundaries_around_peak(power_array, peaks, peak_nom):
 
     Arguments:
         power_array -- The power surface [m^2/s^2].
-        peaks -- The coordinates for the local maxima of the power surface.
+        local_max_coords -- The coordinates for the local maxima of the power surface.
         peak_nom -- The chosen coordinates to analyze.
 
     Returns:
         The recorded boundaries are defined in a 2D numpy array that matches the size of the power surface
     """
-    peak_containers = np.zeros(power_array.shape, dtype=bool)
+    boundary_container = np.zeros(power_array.shape, dtype=bool)
 
-    chosen_peak_coordinate = peaks[peak_nom]
+    chosen_peak_coordinate = local_max_coords[peak_nom]
     row_peak, col_peak = tuple(chosen_peak_coordinate)
 
     # The power surface limit
@@ -557,9 +558,9 @@ def extract_boundaries_around_peak(power_array, peaks, peak_nom):
     )
 
     # The area pertaining to the boundary of the identified AGW packet is set as True.
-    peak_containers[row_coords[:, np.newaxis], col_coords] = True
+    boundary_container[row_coords[:, np.newaxis], col_coords] = True
 
-    return peak_containers,row_coords, col_coords
+    return boundary_container, row_coords, col_coords
 
 
 
@@ -583,32 +584,33 @@ def convert_seconds_to_timestamp(dataframe, initial_timestamp_for_flight):
 
 
 
-def peaks_inside_rectangular_boundary(peaks, boundaries_for_rows, boundaries_for_cols):
+def peaks_inside_rectangular_boundary(local_max_coords, boundaries_for_rows, boundaries_for_cols):
     """
     Determine if other local maxima are located within the rectangular boundary in question.
     
     Arguments:
-        peaks -- The list of all local maxima known.
+        local_max_coords -- The list of all local maxima known.
         boundaries_for_rows -- The indices associated with the length of the rectangular boundary.
         boundaries_for_cols -- The indices associated with the height of the rectangular boundary.
 
     Returns:
         The list of indices associated with the local maxima located inside the rectangular boundary.
     """    
+    
     x1, x2 =  boundaries_for_rows
     y1, y2 =  boundaries_for_cols
     
     # list to store lolca maxima found inside rectangular boundary
-    peaks_within_boundary = []
+    localmaxima_within_boundary = []
 
-    for coords in peaks:
+    for coords in local_max_coords:
         if (x1 < coords[0] and coords[0] < x2):
                 if (y1 < coords[1] and coords[1] < y2):
-                    peaks_within_boundary.append(coords)
+                    localmaxima_within_boundary.append(coords)
         
-    return peaks_within_boundary
+    return localmaxima_within_boundary
 
-def calculate_horizontal_wind_variance(inverted_u_coeff, inverted_v_coeff,peaks_within_boundary_list,peaks,peak_nom):
+def calculate_horizontal_wind_variance(inverted_u_coeff, inverted_v_coeff,localmaxima_within_boundary,local_max_coords,local_max_index):
     """
     Calculate the horizontal wind variance, which is the sum of the reconstructed zonal and meridional wind perturbation
     wavelet coefficients. According to [Zink and Vincent, 2001], if the rectangular boundaries of the reconstructed wavelet
@@ -617,9 +619,9 @@ def calculate_horizontal_wind_variance(inverted_u_coeff, inverted_v_coeff,peaks_
     Arguments:
         inverted_u_coeff -- The reconstructed zonal wind perturbation.
         inverted_v_coeff -- he reconstructed meridional wind perturbation.
-        peaks_within_boundary_list -- List of all the local maxima present within current rectangular boundary.
-        peaks -- The list of all known local maxima.
-        peak_nom -- The index of the local maxima being investigated.
+        localmaxima_within_boundary -- List of all the local maxima present within current rectangular boundary.
+        local_max_coords -- The list of all known local maxima.
+        local_max_index -- The index of the local maxima being investigated.
 
     Returns:
         The horizontal wind variance [m^2/s^2].
@@ -630,16 +632,16 @@ def calculate_horizontal_wind_variance(inverted_u_coeff, inverted_v_coeff,peaks_
     
     # If peaks is equal to itself, leave it be
     # If multiple peaks found inside boundary, divide horizontal wind variance among all the peaks equally
-    if len(peaks_within_boundary_list)==1 and np.array(peaks_within_boundary_list[0] == peaks[peak_nom]).all():
-        peaks_within_boundary_list = peaks[peak_nom]
+    if len(localmaxima_within_boundary)==1 and np.array(localmaxima_within_boundary[0] == local_max_coords[local_max_index]).all():
+        localmaxima_within_boundary = local_max_coords[local_max_index]
         horizontal_wind_variance = horizontal_wind_variance
     else:
-        horizontal_wind_variance = horizontal_wind_variance/len(peaks_within_boundary_list)
+        horizontal_wind_variance = horizontal_wind_variance/len(localmaxima_within_boundary)
         
     return horizontal_wind_variance
 
 
-def inverse_wavelet_transform(wavelet_coef,peak_containers,wavelet_scales,dj,dt):
+def inverse_wavelet_transform(wavelet_coef,boundary_container,wavelet_scales,dj,dt):
     """
     Reconstruct the perturbations associated with the potential gravity wave packet 
     through the inverse wavelet transform of the wavelet coefficients centered within the 
@@ -647,7 +649,7 @@ def inverse_wavelet_transform(wavelet_coef,peak_containers,wavelet_scales,dj,dt)
 
     Arguments:
         wavelet_coef -- The wavelet coefficients computed from the wavelet transform for the perturbations.
-        peak_containers -- The array that contains the rectangular boundary around the wave packet.
+        boundary_container -- The array that contains the rectangular boundary around the wave packet.
         wavelet_scales -- The scales computed from the wavelet transform.
         dj -- The spacing between discrete scales.
         dt -- The spatial resolution [m].
@@ -666,7 +668,7 @@ def inverse_wavelet_transform(wavelet_coef,peak_containers,wavelet_scales,dj,dt)
     copied_wavelet_coef = copy.deepcopy(wavelet_coef)
     
     # All points outside of this rectangular boundary are 0
-    copied_wavelet_coef = copied_wavelet_coef*peak_containers
+    copied_wavelet_coef = copied_wavelet_coef*boundary_container
     wavelet_div_scale = np.divide(copied_wavelet_coef.T,np.sqrt(wavelet_scales))
     
     # Sum over all scales -- NOTE order of dimensions swamped
@@ -686,6 +688,7 @@ def wave_packet_FWHM_indices(horizontal_wind_variance):
     Returns:
         The indices representing the vertical extent of the wave packet, the index associated with the maximum value, and the value of the half maximum.
     """    
+    
     # https://stackoverflow.com/questions/10582795/finding-the-full-width-half-maximum-of-a-peak
     # Find the maximum value and index of maximum value of the horizontal wind variance
     max_value = np.max(horizontal_wind_variance)
@@ -702,10 +705,8 @@ def wave_packet_FWHM_indices(horizontal_wind_variance):
 
 
 # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
-
 def fit_ellipse(x, y):
     """
-
     Fit the coefficients a,b,c,d,e,f, representing an ellipse described by
     the formula F(x,y) = ax^2 + bxy + cy^2 + dx + ey + f = 0 to the provided
     arrays of data points x=[x1, x2, ..., xn] and y=[y1, y2, ..., yn].
@@ -713,10 +714,9 @@ def fit_ellipse(x, y):
     Based on the algorithm of Halir and Flusser, "Numerically stable direct
     least squares fitting of ellipses'.
 
-
     """
+    
     # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
-
     D1 = np.vstack([x**2, x*y, y**2]).T
     D2 = np.vstack([x, y, np.ones(len(x))]).T
     S1 = D1.T @ D1
@@ -734,17 +734,15 @@ def fit_ellipse(x, y):
 
 def cart_to_pol(coeffs):
     """
-
     Convert the cartesian conic coefficients, (a, b, c, d, e, f), to the
     ellipse parameters, where F(x, y) = ax^2 + bxy + cy^2 + dx + ey + f = 0.
     The returned parameters are x0, y0, ap, bp, e, phi, where (x0, y0) is the
     ellipse centre; (ap, bp) are the semi-major and semi-minor axes,
     respectively; e is the eccentricity; and phi is the rotation of the semi-
     major axis from the x-axis.
-
     """
+    
     # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
-
     # We use the formulas from https://mathworld.wolfram.com/Ellipse.html
     # which assumes a cartesian form ax^2 + 2bxy + cy^2 + 2dx + 2fy + g = 0.
     # Therefore, rename and scale b, d and f appropriately.
