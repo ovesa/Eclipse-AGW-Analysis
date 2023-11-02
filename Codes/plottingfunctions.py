@@ -356,8 +356,23 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
     )
 
     ax.annotate(
-        "%.1f km" % (dataframe["Geopot [m]"].iloc[0] / 1000), 
+        "%.2f km" % (dataframe["Geopot [m]"].iloc[0] / 1000), 
        xy= (zonal_wind_perturbation[0], meridional_wind_perturbation[0]), xycoords='data',xytext=(3, 1), textcoords='offset points',
+    )
+    
+    middle_x_point, middle_y_point = len(zonal_wind_perturbation)//2, len(meridional_wind_perturbation)//2
+    ax.scatter(
+        zonal_wind_perturbation[middle_x_point],
+        meridional_wind_perturbation[middle_y_point],
+        color="b",
+        marker="o",
+        s=35,
+        zorder=1, edgecolor='k'
+    )
+
+    ax.annotate(
+        "%.2f km" % (dataframe["Geopot [m]"].iloc[middle_x_point] / 1000), 
+       xy= (zonal_wind_perturbation[middle_x_point], meridional_wind_perturbation[middle_x_point]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     )
 
     ax.scatter(
@@ -370,7 +385,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,datafra
     )
 
     ax.annotate(
-        "%.1f km" % (dataframe["Geopot [m]"].iloc[-1] / 1000),
+        "%.2f km" % (dataframe["Geopot [m]"].iloc[-1] / 1000),
         xy=(zonal_wind_perturbation[-1], meridional_wind_perturbation[-1]) , xycoords='data',xytext=(3, 1), textcoords='offset points',
     )
 

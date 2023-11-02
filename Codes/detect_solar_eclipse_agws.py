@@ -11,7 +11,7 @@ import matplotlib
 
 import plottingfunctions
 import datafunctions
-import toml
+
 plt.ion()
 
 ################### Plotting Properties ###################
@@ -44,7 +44,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 5
+file_nom = 0
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -73,7 +73,7 @@ print("\n")
 tropopause_height = 12000 
 
 # to give a rise rate of 5 m/s
-spatial_resolution = 5 
+spatial_resolution = 4
 
 # Spatial height interpolation limit [m]
 # Tells code to not interpolate if there are more than [interpolation_limit] consecutive rows of missing/ NaN values
@@ -112,6 +112,8 @@ choose_data_frame_analyze = datafunctions.convert_seconds_to_timestamp(choose_da
     temperature,
 ) = datafunctions.extract_wind_components_and_temperature(choose_data_frame_analyze)
 
+# Grab the height array
+height_array = choose_data_frame_analyze["Geopot [m]"]
 
 ################### Calculate First-Order Perturbations ###################
 
@@ -229,7 +231,7 @@ coiMask = np.array(
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 2
+peak_nom = 3
 
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
@@ -264,6 +266,7 @@ plottingfunctions.plot_power_surface(
 )
 
 ################### Inverse Wavelet Transform ###################
+
 # [Zink and Vincent, 2001] -- Reconstruct perturbations associated with the gravity wave packet within the determined rectangular boundary
 u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,peak_containers,u_scales,dj,dt)
 v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,peak_containers,v_scales,dj,dt)
@@ -276,7 +279,7 @@ horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_in
 vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max  = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
 
 # Quick plot of the horizontal wind variance
-plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max)
+# plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max)
 
 # Only consider the perturbations associated with the vertical extent of the wave packet
 iu_wave = (u_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
@@ -286,7 +289,7 @@ it_wave = (t_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
 ################### Hodograph Analysis ###################
 
 plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_analyze)
-plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
+# plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
 
 ################### Extracting Wave Parameters ###################
 
@@ -339,12 +342,12 @@ else:
     print("d = %.2f -- Might not be an AGW. Polarization factor too low (d < 0.05) or unrealistic (d > 1) value"%polarization_factor)
 
 # Pfenninger et. al, 1999] -- Eqn. 11
-# Orientation of major axis of ellipse (parallel to GW vector)
-# Direction of the horizontal component of the wave vector
+# Orientation of major axis - direction of propagation of gravity wave (deg clockwise from N)
 # Measured anticlockwise from the x-axis
 # 180 deg ambiguity
-# Horizontal direction of propagation of GW (deg clockwise from N)
 theta = np.arctan2(Stokes_P, Stokes_D) / 2
+
+print("%.2f degree measured anticlockwise from x-axis"%np.rad2deg(theta))
 
 # [Pfenninger et. al, 1999] -- Determine orientaiton of major axis and remove ambiguity
 U_prime = iu_wave.real * np.cos(theta) + iv_wave.real * np.sin(theta)
@@ -359,11 +362,13 @@ sign = U_prime * hilbert_t
 if np.sum(sign < 0, axis=0) > 0:
     theta = theta + np.pi
     print("\n")
+    print("Counterclockwise rotation from x-axis")
     print("Propagation direction is in %.2f degree direction"% (np.rad2deg(theta)))
 
 elif np.sum(sign > 0, axis=0)> 0:
     theta = theta
     print("\n")
+    print("Clockwise rotation from x-axis")
     print("Propagation direction is in %.2f degree direction"% (np.rad2deg(theta)))
     theta = theta
 
@@ -374,7 +379,7 @@ omega_Earth = 7.29e-5  # Rotation rate of earth [radians /seconds]
 f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia)) # [rad/s]
 
 # [Koushik et. al, 2019] -- Eqn 8
-# axial ratio -- ratio of the minor axis to the maxjor axis
+# axial ratio -- ratio of the major axis to minor axis
 eta = (0.5) * np.arcsin(
     Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q**2)
 )
@@ -382,7 +387,7 @@ eta = (0.5) * np.arcsin(
 # [Yoo et al, 2018] -- Eqn 6 & 7
 # [Koushik et. al, 2019] -- typical values of inverse axial ratios [1.0, 3.5]; median: 1.4
 axial_ratio = np.tan(eta)
-inverse_axial_ratio = (1/ axial_ratio) # [rad/s]
+inverse_axial_ratio = np.abs(1/ axial_ratio) # [rad/s]
 
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency: frequency observed in the reference frame moving with the background wind
 intrinsic_frequency = f_coriolis * inverse_axial_ratio # [rad/s]
@@ -400,6 +405,9 @@ u_parallel_v_perendicular = np.dot(rotation_matrix,wind_vectors)
 gamma = np.mean(u_parallel_v_perendicular[0]*np.conj(it_wave))/ np.sqrt( np.mean( np.abs(u_parallel_v_perendicular[0])**2) * np.mean( np.abs(it_wave)**2)   )
 phase_difference_gamma_in_degrees = np.angle(gamma,deg=True)
 
+# if phase_difference_gamma_in_degrees < 0:
+#         theta = theta + np.pi
+        
 # Constants
 grav_constant = 9.81  # gravity [m/s^2]
 ps = 1000  # standard pressure [hPa] -- equal to 1 millibar
@@ -519,10 +527,9 @@ cgh = np.sqrt(cgx**2 + cgy**2)
 Rconst = 287 # J/kg/K
 rho = (choose_data_frame_analyze["P [hPa]"]**100)/(Rconst *temperature_K) # density [kg/m^3]
 
-# momentum flux [Pa]
-zonal_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iu_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])
-
-meridional_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iv_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])
+# momentum flux [Pa] - [m^2/s^2]
+zonal_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iu_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[vertical_extent_coordx:vertical_extent_coordy])
+meridional_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iv_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[vertical_extent_coordx:vertical_extent_coordy])
 
 
 data_dictionary = {}
@@ -539,17 +546,20 @@ plt.plot(iu_wave.real,iv_wave.real, 'x')     # given points
 xn, yn = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
 plt.plot(xn, yn)
 plt.plot(x0,y0,color='r',marker='x')
+plt.axhline(y=y0,linestyle='--', color='k')
+plt.axvline(x=x0,linestyle='--', color='k')
+
+# mag = axial_ratio
+# U = mag * np.cos( np.deg2rad(phase_difference_gamma_in_degrees ) )
+# V = mag * np.sin( np.deg2rad(phase_difference_gamma_in_degrees ) )
+
+# plt.quiver(x0,y0, U, V, color='r', width=0.003)
+
+# mag = inverse_axial_ratio
+# U = mag * np.cos( theta ) 
+# V = mag * np.sin( theta ) 
+# plt.quiver(x0,y0, U, V, color='k', width=0.003)
 
 
-mag = axial_ratio
-U = mag * np.cos( np.deg2rad(phase_difference_gamma_in_degrees ) )
-V = mag * np.sin( np.deg2rad(phase_difference_gamma_in_degrees ) )
-
-plt.quiver(x0,y0, U, V, color='k', width=0.003)
-
-mag = axial_ratio
-U = mag * np.cos( theta ) 
-V = mag * np.sin( theta ) 
-plt.quiver(x0,y0, U, V, color='k', width=0.003)
 
 plt.show()

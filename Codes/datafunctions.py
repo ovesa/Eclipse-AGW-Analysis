@@ -339,7 +339,7 @@ def compute_polynomial_fits(dataframe, array, order=2):
     remove the background state from the main vertical profile of the variable.
 
     Arguments:
-        dataframe -- The Pandas DataFrame.
+        dataframe -- The Pandas height series.
         array -- The array to perform the least squares polynomial fit.
 
     Keyword Arguments:
@@ -348,8 +348,8 @@ def compute_polynomial_fits(dataframe, array, order=2):
     Returns:
         A vector of the polynomial coefficients that minimizes the squared error.
     """
-    idx = np.isfinite(dataframe["Geopot [m]"]) & np.isfinite(array)
-    array_fit = np.polyfit(dataframe["Geopot [m]"][idx], array[idx], order)
+    idx = np.isfinite(dataframe) & np.isfinite(array)
+    array_fit = np.polyfit(dataframe[idx], array[idx], order)
 
     return array_fit
 
@@ -362,7 +362,7 @@ def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
     & [Vincent and Alexander, 2000].
 
     Arguments:
-        dataframe -- The Pandas DataFrame.
+        dataframe -- The Pandas height series.
         perturbations -- The perturbation array to compute the polynomial fit on.
         polynomial_fit -- A vector of the polynomial coefficients that minimizes the squared error.
 
@@ -373,8 +373,8 @@ def derive_first_order_perturbations(dataframe, perturbations, polynomial_fit):
     # Apply polynomia fit then subtract from main vertical profile to remove background states
     # Don't need to create a new array because we are using the recently created evenly spaced height grid
     first_order_perturbations = perturbations - (
-        polynomial_fit[0] * dataframe["Geopot [m]"] ** 2
-        + polynomial_fit[1] * dataframe["Geopot [m]"]
+        polynomial_fit[0] * dataframe ** 2
+        + polynomial_fit[1] * dataframe
         + polynomial_fit[2] * np.ones(len(perturbations))
     )
 
@@ -441,7 +441,7 @@ def get_boundaries(
     return coords
 
 
-def compute_wavelet_components(array, dj,dt, s0,mother_wavelet, spatial_resolution, padding):
+def compute_wavelet_components(array, dj,dt, s0,mother_wavelet, padding):
     """
     Calculate the wavelet coefficients of the first-order perturbations [Zink and Vincent, 2001]. 
     Uses the wavelet transform described in [Torrence and Campo, 1989]. 
@@ -451,7 +451,6 @@ def compute_wavelet_components(array, dj,dt, s0,mother_wavelet, spatial_resoluti
         dj -- Resolution of the wavelet transform.
         mother_wavelet -- The wavelet family. Typically, a morlet wavelength is chosen.
                             Resembles the gravity wave packets [Koushik et. al, 2019].
-        spatial_resolution -- The spatial resolution of the data.
 
     Returns:
         The wavelet coefficients, periods, scales, and cone of influence for the wavelet
@@ -505,7 +504,9 @@ def find_local_maxima(power_array, threshold_val, coi, sig):
     peaks = peaks[[sig_mask[tuple(x)] for x in peaks]]
 
     print("\n")
-    print("Found %s peaks within cone of influence & significance" % (peaks.shape[0]))
+    print("Found %s local maxima within cone of influence & significance" % (peaks.shape[0]))
+    print("\n")
+
     return peaks
 
 
@@ -564,9 +565,11 @@ def convert_seconds_to_timestamp(dataframe, initial_timestamp_for_flight):
     Returns:
         A new time column in UTC. Moved new column to be the 2nd column in DataFrame.
     """    
+    
     dataframe["Time [UTC]"] = pd.to_datetime(dataframe["Time [sec]"], unit='s', origin=str(initial_timestamp_for_flight))
     column_to_move =  dataframe.pop("Time [UTC]")
     dataframe.insert(1, "Time [UTC]", column_to_move )
+    
     return dataframe
 
 

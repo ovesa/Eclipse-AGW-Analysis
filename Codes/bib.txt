@@ -64,7 +64,7 @@ https://amt.copernicus.org/articles/13/479/2020/amt-13-479-2020.pdf
 https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2018JD029164
 https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2015JD023505
 https://sci-hub.se/https://doi.org/10.1029/96JD01578
-
+https://digital.library.adelaide.edu.au/dspace/bitstream/2440/19619/1/01front.pdf
 
 # [Sato and Yamada ,1994] -- horizontal wind component is counterclockwise perpendicular to intrinsic phase velocity
 # m positive; T antiphase with horizontal wind
