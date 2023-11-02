@@ -151,10 +151,10 @@ def plot_power_surface(
     height_km,
     power_array,
     periods,
-    peak_container,
+    boundary_container,
     signif,
     coi,
-    peaks,
+    local_max_coords,
     colormap,
     time, nom,
     path_to_save_figure,
@@ -167,10 +167,10 @@ def plot_power_surface(
         height_km -- Height array [km]
         power_array -- The power surface [m^2/s^2].
         periods -- The wavelet coefficient scales; corresponds to the vertical wavelength [m].
-        peak_container -- The true/false array marking the boundaries of the AGW wave packet.
+        boundary_container -- The true/false array marking the boundaries of the AGW wave packet.
         signif -- The wave significance array.
         coi -- _The cone of influence significane array.
-        peaks -- _The coordinates of the local maxima.
+        local_max_coords -- _The coordinates of the local maxima.
         colormap -- The colormap for the power surface.
         time -- The starting time & date of the radiosonde launch [Pandas Timestamp].
         nom -- The index of the local maximum being investigated ~ the potential GW.
@@ -230,8 +230,8 @@ def plot_power_surface(
     )
 
     ax.scatter(
-        height_km[peaks.T[1]],
-        periods[peaks.T[0]] / 1000,
+        height_km[local_max_coords.T[1]],
+        periods[local_max_coords.T[0]] / 1000,
         c="red",s=50,
         marker=".", edgecolor='k'
     )
@@ -239,7 +239,7 @@ def plot_power_surface(
     ax.contour(
         height_km,
         periods / 1000,
-        peak_container,
+        boundary_container,
         colors="r",
         levels=[0.5],
     )

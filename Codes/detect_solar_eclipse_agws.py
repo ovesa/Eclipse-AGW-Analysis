@@ -233,7 +233,7 @@ local_maxima_coords = datafunctions.find_local_maxima(power, 0.011, coiMask, sig
 
 wave_nom = 4
 
-local_max_container, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, local_maxima_coords, wave_nom)
+rectangular_boundary_container, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, local_maxima_coords, wave_nom)
 
 z_index_of_max_local_power = local_maxima_coords[wave_nom][1] # corresponds to index of the max height
 a_index_of_max_local_power = local_maxima_coords[wave_nom][0] # corresponds to the index of the max vertical wavelength
@@ -249,7 +249,7 @@ plottingfunctions.plot_power_surface(
     choose_data_frame_analyze["Geopot [m]"]/1000,
     power,
     u_periods,
-    local_max_container,
+    rectangular_boundary_container,
     signif,
     coiMask,
     local_maxima_coords,
@@ -262,9 +262,9 @@ plottingfunctions.plot_power_surface(
 ################### Inverse Wavelet Transform ###################
 
 # [Zink and Vincent, 2001] -- Reconstruct perturbations associated with the gravity wave packet within the determined rectangular boundary
-u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,local_max_container,u_scales,dj,dt)
-v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,local_max_container,v_scales,dj,dt)
-t_inverted_coeff = datafunctions.inverse_wavelet_transform(t_coef,local_max_container,t_scales,dj,dt)
+u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,rectangular_boundary_container,u_scales,dj,dt)
+v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,rectangular_boundary_container,v_scales,dj,dt)
+t_inverted_coeff = datafunctions.inverse_wavelet_transform(t_coef,rectangular_boundary_container,t_scales,dj,dt)
 
 # Calculate the horizontal wind variance [m^2/s^2]
 horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_inverted_coeff, v_inverted_coeff,local_max_within_boundaries,local_maxima_coords,wave_nom)
