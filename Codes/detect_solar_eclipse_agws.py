@@ -229,7 +229,8 @@ coiMask = np.array(
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 7
+peak_nom = 2
+
 peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
 
 associated_timestamps_range_of_boundary = choose_data_frame_analyze["Time [UTC]"].iloc[boundary_cols] # TimeStamps [UTC]
@@ -241,6 +242,7 @@ associated_time_of_peak = choose_data_frame_analyze["Time [UTC]"].iloc[peaks[pea
 z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to index of the max height
 a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the index of the max vertical wavelength
 
+# Determine if other local maxima are found within the rectangualr boundary
 peaks_within_boundaries = datafunctions.peaks_inside_rectangular_boundary(peaks, boundary_rows, boundary_cols)
 
 ################### Plot Power Surface ###################
@@ -273,6 +275,7 @@ horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_in
 # [Zink and Vincent, 2001] -- vertical extent of the gravity wave packet is associated with the FWHM of the horizontal wind variance
 vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max  = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
 
+# Quick plot of the horizontal wind variance
 plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max)
 
 # Only consider the perturbations associated with the vertical extent of the wave packet
@@ -286,6 +289,116 @@ plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,choose_data_frame_an
 plottingfunctions.winds_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,(choose_data_frame_analyze["Geopot [m]"]/1000).iloc[vertical_extent_coordx:vertical_extent_coordy])
 
 ################### Extracting Wave Parameters ###################
+
+# Calculate Stokes Parameters for the wave packet
+# [Pfenninger et. al, 1999] -- Eqn. 9
+# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
+hilbert_v = iv_wave.imag
+
+# Represent the total energy/variance
+Stokes_I = np.mean(iu_wave.real**2) + np.mean(iv_wave.real**2)
+# Variance difference/ Axial anisotropy
+Stokes_D = np.mean(iu_wave.real**2) - np.mean(iv_wave.real**2)
+# In-phase covariance; associated with linear polarization
+Stokes_P = 2 * np.mean(iu_wave.real * iv_wave.real)
+# Quadrature covariance; associated with circular polarization
+Stokes_Q = 2 * np.mean(iu_wave.real * hilbert_v)
+
+# [Pfenninger et. al, 1999] -- think of Stokes Q as the energy difference betwen propagating AGWs
+# [Koushik et. al, 2019] -- Stokes  Q -- sense of rotation of the polarization ellipse
+if Stokes_Q > 0:
+    print("\n")
+    print("Stokes Q is positive; Wave energy propagating upward")
+    print("Clockwise rotation of the polarized ellipse")
+else:
+    print("\n")
+    print("Stokes Q is negative; Wave energy propagating downwards")
+    print("Anticlockwise rotation of the polarized ellipse")
+
+# [Koushik et. al, 2019] -- Stokes P or Q less than threshold value might not be not agws
+if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
+    print("\n")
+    print("Might not be an AGW; representative of poor wave activity")
+
+
+# degree of polarization -- stastical measure of the coherence of the wave field
+polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
+
+# [Yoo et al, 2018] -- conditions for the wave packet
+if 0.5 <= polarization_factor < 1:
+    print("\n")
+    print("d = %.2f -- Most likely an AGW"%polarization_factor)
+elif polarization_factor == 1:
+    print("\n")
+    print("d = %.2f -- Monochromatic Wave"%polarization_factor)
+elif polarization_factor == 0:
+    print("\n")
+    print("d = %.2f -- Not an AGW; no polarization relationship"%polarization_factor)
+else:
+    print("\n")
+    print("d = %.2f -- Might not be an AGW. Polarization factor too low (d < 0.05) or unrealistic (d > 1) value"%polarization_factor)
+
+# Pfenninger et. al, 1999] -- Eqn. 11
+# Orientation of major axis of ellipse (parallel to GW vector)
+# Direction of the horizontal component of the wave vector
+# Measured anticlockwise from the x-axis
+# 180 deg ambiguity
+# Horizontal direction of propagation of GW (deg clockwise from N)
+theta = np.arctan2(Stokes_P, Stokes_D) / 2
+
+# [Pfenninger et. al, 1999] -- Determine orientaiton of major axis and remove ambiguity
+U_prime = iu_wave.real * np.cos(theta) + iv_wave.real * np.sin(theta)
+
+# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted (Hilbert transform)
+hilbert_t = it_wave.imag
+
+# [Koushik et. al, 2019] -- sign determines direction of propagaton
+# https://digital.library.adelaide.edu.au/dspace/bitstream/2440/19619/1/01front.pdf
+sign = U_prime * hilbert_t
+
+if np.sum(sign < 0, axis=0) > 0:
+    theta = theta + np.pi
+    print("\n")
+    print("Propagation direction is in %.2f degree direction"% (np.rad2deg(theta)))
+
+elif np.sum(sign > 0, axis=0)> 0:
+    theta = theta
+    print("\n")
+    print("Propagation direction is in %.2f degree direction"% (np.rad2deg(theta)))
+    theta = theta
+
+# [Pfenninger et. al, 1999] -- Coriolis force causes wind vectors to rotate with height & form an ellipse
+latitude_artesia = 32.842258  # latitude of location [degrees]
+omega_Earth = 7.29e-5  # Rotation rate of earth [radians /seconds]
+# [Fritts and Alexander, 2003] -- Coriolis Force
+f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia)) # [rad/s]
+
+# [Koushik et. al, 2019] -- Eqn 8
+# axial ratio -- ratio of the minor axis to the maxjor axis
+eta = (0.5) * np.arcsin(
+    Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q**2)
+)
+
+# [Yoo et al, 2018] -- Eqn 6 & 7
+# [Koushik et. al, 2019] -- typical values of inverse axial ratios [1.0, 3.5]; median: 1.4
+axial_ratio = np.tan(eta)
+inverse_axial_ratio = (1/ axial_ratio) # [rad/s]
+
+# Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency: frequency observed in the reference frame moving with the background wind
+intrinsic_frequency = f_coriolis * inverse_axial_ratio # [rad/s]
+
+# intrisince period
+intrinsic_period = 2*np.pi/intrinsic_frequency # [s]
+
+# https://digital.library.adelaide.edu.au/dspace/bitstream/2440/19619/1/01front.pdf
+wind_vectors = [iu_wave.real, iv_wave.real]
+rotation_matrix = [  [np.cos(theta), np.sin(theta)], [-np.sin(theta),np.cos(theta)]    ]
+u_parallel_v_perendicular = np.dot(rotation_matrix,wind_vectors)
+
+# Phase difference between parallel zonal winds and temperature
+# zonal and temperature perturbations should be 90 deg out of phase
+gamma = np.mean(u_parallel_v_perendicular[0]*np.conj(it_wave))/ np.sqrt( np.mean( np.abs(u_parallel_v_perendicular[0])**2) * np.mean( np.abs(it_wave)**2)   )
+phase_difference_gamma_in_degrees = np.angle(gamma,deg=True)
 
 # Constants
 grav_constant = 9.81  # gravity [m/s^2]
@@ -316,60 +429,14 @@ mean_buoyancy_frequency = mean_buoyancy_frequency[vertical_extent_coordx:vertica
 # Mean buoyancy period
 mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
 
+## other checck
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/97JD03325
+#limit
+# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448 figure 1b
+#mean_buoyancy_frequency > intrinsic_frequency > intrinsic_frequency
 
-## Stokes parameters for gravity waves
-# Eqn. 9 from [Pfenninger et. al, 1999]
-# Hilbert transform of the meridional wind component - adds a 90 deg phase shift to vertical profile
-# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
-hilbert_v = iv_wave.imag
-
-# Represent the total energy
-Stokes_I = np.mean(iu_wave.real**2) + np.mean(iv_wave.real**2)
-# variance difference/ linear polarization measure
-Stokes_D = np.mean(iu_wave.real**2) - np.mean(iv_wave.real**2)
-# P and Q are the in phase and quadrature components between wave components
-Stokes_P = 2 * np.mean(iu_wave.real * iv_wave.real)
-# measure of the circular polarization
-# Sense rotation of the polarized ellipse
-Stokes_Q = 2 * np.mean(iu_wave.real * hilbert_v)
-
-# [Pfenninger et. al, 1999] -- think of Stokes Q as the energy difference betwen propagating AGWs
-# [Koushik et. al, 2019] -- Stokes  Q -- sense of rotation of th[boundary_cols[0]:boundary_cols[1]]e polarizaition ellipse
-if Stokes_Q > 0:
-    print("\n")
-    print("Wave energy propagating upward")
-    print("Clockwise rotation of the polarized ellipse")
-    print("Stokes Q is positive")
-else:
-    print("\n")
-    print("Wave energy propagating downwards")
-    print("Anticlockwise rotation of the polarized ellipse")
-    print("Stokes Q is negative")
-
-# [Koushik et. al, 2019]  -- stokes p or q less than threshold value might not be not agws
-if np.abs(Stokes_P) < 0.05 or np.abs(Stokes_Q) < 0.05:
-    print("\n")
-    print("Might not be an AGW; representative of poor wave activity")
-
-
-# stastical measure of the coherence of the wave field
-# degree of polarization
-polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
-
-# [Yoo et al, 2018]
-if 0.5 <= polarization_factor < 1:
-    print("\n")
-    print("d = %.2f -- Most likely an AGW"%polarization_factor)
-elif polarization_factor == 1:
-    print("\n")
-    print("d = %.2f -- Monochromatic Wave"%polarization_factor)
-elif polarization_factor == 0:
-    print("\n")
-    print("d = %.2f -- Not an AGW; no polarization relationship"%polarization_factor)
-else:
-    print("\n")
-    print("d = %.2f -- Might not be an AGW. Polarization factor too low or unrealistic value"%polarization_factor)
-
+if not mean_buoyancy_frequency > intrinsic_frequency > f_coriolis:
+    print("Not physical")
 
 height_range_over_vertical_extent = choose_data_frame_analyze["Geopot [m]"][vertical_extent_coordx:vertical_extent_coordy]
 u_zonal_perturbations_over_vertical_extent = u_zonal_perturbations[vertical_extent_coordx:vertical_extent_coordy]
@@ -388,99 +455,26 @@ elif 0 < richardson_number < 0.25:
     print("\n")
     print("Dynamically unstable")
 
-# Eqn. 11 from [Pfenninger et. al, 1999]
-# Orientation of major axis of ellipse
-# direction of the horizontal component of the wave vector
-# oriented parallel to GW vector
-# theta is measured anticlockwise from the x-axis
-# 180 deg ambiguity
-# horizontal direction of propagation of GW (deg clockwise from N)
-theta = np.arctan2(Stokes_P, Stokes_D) / 2
-
-# phase difference
-# [Eckerman and Vincent, 1989] -- Eqn 7
-phase_difference = np.arctan2(Stokes_Q,Stokes_P)
-
-# Coriolis Force
-# Omega is rotation rate of earth
-# [Pfenninger et. al, 1999] -- Coriolis forced causes wind vectors to rotate with height & form an ellipse
-latitude_artesia = 32.842258  # degrees
-omega_Earth = 7.29e-5  # [radians /seconds]
-# [Fritts and Alexander, 2003]
-f_coriolis = 2 * omega_Earth * np.sin(np.deg2rad(latitude_artesia)) # [rad/s]
-
-
-# remove ambiguity
-# wind found in the major axis direction
-# [Pfenninger et. al, 1999]
-U_prime = iu_wave.real * np.cos(theta) + iv_wave.real * np.sin(theta)
-
-# Hilbert transform of the temperature perturbation
-# [Zink and Vincent, 2001] -- imaginary part is 90 degree phase shifted version (Hilbert transformed versions)
-hilbert_t = it_wave.imag
-
-# sign determines direction of propagaton
-sign = U_prime * hilbert_t
-
-# [Koushik et. al, 2019]
-if np.sum(sign < 0, axis=0) > 0:
-    print("\n")
-    print("sign of direction is negative")
-    theta = np.deg2rad(np.rad2deg(theta) + 180 )
-
-elif np.sum(sign > 0, axis=0)> 0:
-    print("\n")
-    print("sign of direction is positive")
-    theta = theta
-
-
-# coherencey, correlated power between U and V
-C = np.sqrt((Stokes_P**2 + Stokes_Q**2) / (Stokes_I**2 - Stokes_D**2))
-
-# axial ratio -- ratio of the minor axis to the maxjor axis; aspect ratio of the polarization ellipse
-# Eqn. 8 [Koushik et. al, 2019]
-eta = (0.5) * np.arcsin(
-    Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q**2)
-)
-# [Yoo et al, 2018] -- Eqn 6 & 7
-# [Koushik et. al, 2019] -- typical values of inverse axial ratios [1.0, 3.5]; median: 1.4
-axial_ratio = np.tan(eta)
-inverse_axialratio = np.abs(1/ axial_ratio) # [rad/s]
-
-# Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency -- frequency observed in the reference frame moving with the background wind
-intrinsic_frequency = f_coriolis * inverse_axialratio # [rad/s]
-
-intrinsic_period = 2*np.pi/intrinsic_frequency # [s]
-
-## other checck
-# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1029/97JD03325
-#limit
-# https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/2014JD022448 figure 1b
-#mean_buoyancy_frequency > intrinsic_frequency > intrinsic_frequency
-
-if intrinsic_frequency > mean_buoyancy_frequency:
-    print("Intrinsic frequency of wave packet greater than the Brunt-Vaisala frequency...not possible")
-
 # vertical wavenumber and wavelength
 vertical_wavenumber = (2 * np.pi) / u_periods[a_index_of_max_local_power] # [1/m]
 vertical_wavelength = u_periods[a_index_of_max_local_power] # [m]
-
 
 # horizontal wavenumber and wavelength [Murphy et al, 2014] -- Eqn B2
 horizontal_wavenumber = (vertical_wavenumber/mean_buoyancy_frequency)*np.sqrt(intrinsic_frequency**2 - f_coriolis**2) # [1/m]
 horizontal_wavelength = (2 * np.pi) / horizontal_wavenumber # [m]
 
-
-
-## dispersion relation for low/medium-freqyuency gravity waves
+# dispersion relation for low/medium-freqyuency gravity waves
+# should be equal to the intrisince frequency
 omega_squared = mean_buoyancy_frequency**2 * (horizontal_wavenumber**2 / vertical_wavenumber**2) + f_coriolis**2
 
+if intrinsic_frequency != np.sqrt(omega_squared):
+    print("Something isn't right")
 
 # [Murphy et al, 2014] -- Eqn 2
 # averages done over vertical span of the wave
 vertical_extent_of_zonal_perturbation = np.mean((iu_wave.real)**2)
 vertical_extent_of_meridional_perturbation = np.mean((iv_wave.real)**2)
-vertical_extent_of_temperature = np.mean((it_wave.real / choose_data_frame_analyze["T [°C]"].iloc[FWHM_variance])**2)
+vertical_extent_of_temperature = np.mean((it_wave.real / choose_data_frame_analyze["T [°C]"].iloc[vertical_extent_coordx:vertical_extent_coordy])**2)
 
 # Eqn. 14 & 15 [Koushik et. al, 2019]
 #  gravity wave kinetic/potential energy density [J/Kg]
@@ -533,3 +527,29 @@ meridional_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyan
 
 data_dictionary = {}
 
+
+# Fitting an ellipse
+coeffs = datafunctions.fit_ellipse(iu_wave.real,iv_wave.real)
+print('Fitted parameters:')
+print('a, b, c, d, e, f =', coeffs)
+x0, y0, ap, bp, e, phi = datafunctions.cart_to_pol(coeffs)
+print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
+
+plt.plot(iu_wave.real,iv_wave.real, 'x')     # given points
+xn, yn = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
+plt.plot(xn, yn)
+plt.plot(x0,y0,color='r',marker='x')
+
+
+mag = axial_ratio
+U = mag * np.cos( np.deg2rad(phase_difference_gamma_in_degrees ) )
+V = mag * np.sin( np.deg2rad(phase_difference_gamma_in_degrees ) )
+
+plt.quiver(x0,y0, U, V, color='k', width=0.003)
+
+mag = axial_ratio
+U = mag * np.cos( theta ) 
+V = mag * np.sin( theta ) 
+plt.quiver(x0,y0, U, V, color='k', width=0.003)
+
+plt.show()
