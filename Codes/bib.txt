@@ -58,6 +58,10 @@ Journals:
 
 [Moffat-Griffin et al., 2011b] -- https://agupubs.onlinelibrary.wiley.com/doi/epdf/10.1002/jgrd.50859
 
+[Zink 2000] -- https://digital.library.adelaide.edu.au/dspace/bitstream/2440/19619/3/02whole.pdf
+
+[Galperin et al., 2007] -- https://www.atmos.albany.edu/facstaff/rfovell/NWP/2007-galperin-etal.pdf
+
 check out:
 
 https://amt.copernicus.org/articles/13/479/2020/amt-13-479-2020.pdf

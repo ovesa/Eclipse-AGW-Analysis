@@ -105,12 +105,14 @@ def clean_data(dataframe, tropopause_height, original_data_shape):
 
     # We need to check if any rows contain bad values (NaNs)
     # GRAWMET sometimes prints out the value 999999.0, which I assume to be NaN equivalent
-    condition2 = dataframe.eq(999999.0).any(1)
+    # OR equal to 0 anywhere (meaning that the data didn't get recorded properly)
+    condition2 = dataframe.eq(999999.0).any(1) | dataframe.eq(0).any(1)
     # We will remove rows that match this condition
     # Reset the DataFrame index to ensure counting starts back at 0
     dataframe = dataframe.drop(dataframe[condition2 == True].index).reset_index(
         drop=True
     )
+    
 
     # We need to remove data below the tropopause
     # Steep changes in temperature below the tropopause will affect identifying atmospheric gravity waves
