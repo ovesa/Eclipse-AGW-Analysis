@@ -45,6 +45,7 @@ def plot_vertical_profiles_with_residual_perturbations(
         Plots the original vertical profiles for the temperature, zonal, and meridional wind speeds and
         the computed first-order perturbations for the same variables.
     """
+    
     fig, axs = plt.subplots(3, 2, figsize=[8, 10], sharey=True)
 
     fig.suptitle(str(time) + " UTC")
@@ -181,6 +182,7 @@ def plot_power_surface(
     Returns:
         Plots the power surface with the local maxima identified.
     """
+    
     copied_power_array = np.log(copy.deepcopy(power_array))
     copied_power_array[copied_power_array < 0] = 0
 
@@ -485,7 +487,6 @@ def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, ver
     ax.scatter(vertical_extent_coordx, horizontal_wind_variance[vertical_extent_coordx], s=40, color='red', edgecolor='k',zorder=1)
     ax.scatter(vertical_extent_coordy, horizontal_wind_variance[vertical_extent_coordy], s=40,  color='red', edgecolor='k',zorder=1)
 
-
     ax.set_xlim([vertical_extent_coordx-100,vertical_extent_coordy+100])
     ax.set_ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
     ax.set_xlabel("Vertical Extent [indices]")
@@ -529,9 +530,9 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
     Returns:
         A figure.
     """    
+    
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
     ax.set_title(title)
-
 
     ax.scatter(zonal_wind_perturbation, meridional_wind_perturbation, color='k', s=15, marker='x', zorder=1,label="Data")
     ax.axhline(y=centery,linestyle='--',  color='b', linewidth=0.5, zorder=1)
@@ -543,9 +544,6 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
     V = magnitude*np.sin(theta)
     plt.quiver(centerx,centery,U,V, width=0.003)
 
-
-
-   
     ax.scatter(
         zonal_wind_perturbation[0],
         meridional_wind_perturbation[0],
