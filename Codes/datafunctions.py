@@ -7,6 +7,7 @@ import copy
 from scipy.signal import argrelmin
 from waveletFunctions import wavelet
 from skimage.feature import peak_local_max
+import datetime
 
 ###########################################################
 
@@ -60,8 +61,12 @@ def grab_initial_grawmet_profile_parameters(dataframe):
 
     else:
         UTC_time_grid = dataframe["Time (UTC)"]
-        starting_time_for_flight = UTC_time_grid.iloc[0]
-        ending_time_for_flight = UTC_time_grid.iloc[-1]
+        if UTC_time_grid.iloc[0] == datetime.time(0, 0):
+            starting_time_for_flight = UTC_time_grid.iloc[1]
+            ending_time_for_flight = UTC_time_grid.iloc[-1]
+        else:
+            starting_time_for_flight = UTC_time_grid.iloc[0]
+            ending_time_for_flight = UTC_time_grid.iloc[-1]
 
     data_shape = dataframe.shape
 
@@ -105,8 +110,8 @@ def clean_data(dataframe, tropopause_height, original_data_shape):
 
     # We need to check if any rows contain bad values (NaNs)
     # GRAWMET sometimes prints out the value 999999.0, which I assume to be NaN equivalent
-    # OR equal to 0 anywhere (meaning that the data didn't get recorded properly)
-    condition2 = dataframe.eq(999999.0).any(1) | dataframe.eq(0).any(1)
+    # Or if the time UTC columns have a weird format of 0 (implying the value wasn't recorded properly)
+    condition2 = dataframe.eq(999999.0).any(1) | dataframe["Time (UTC)"].eq(datetime.time(0, 0))
     # We will remove rows that match this condition
     # Reset the DataFrame index to ensure counting starts back at 0
     dataframe = dataframe.drop(dataframe[condition2 == True].index).reset_index(

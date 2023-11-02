@@ -41,7 +41,7 @@ path_to_save_figures = "/media/oana/Data1/Annular_Eclipse_Analysis/Figures/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 5
+file_nom = 2
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -155,9 +155,9 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     u_zonal_perturbations,
     v_meridional_perturbations,
     temperature_perturbations,
-    starting_time_for_flight,
-    path_to_save_figures + "/First-Order-Perturbations/",
-    save_fig=False,
+    time_UTC.iloc[0],
+    path_to_save_figures + "/First_Order_Perturbations/",
+    save_fig=False
 )
 
 ################### Wavelet Analysis ###################
@@ -229,17 +229,17 @@ coiMask = np.array(
 ################### Find Local Maxima & Extract Boundaries Around Gravity Wave Packet ###################
 
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
-peaks = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
+local_maxima_coords = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
-peak_nom = 4
+wave_nom = 4
 
-peak_containers, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, peaks, peak_nom)
+local_max_container, boundary_rows, boundary_cols = datafunctions.extract_boundaries_around_peak(power, local_maxima_coords, wave_nom)
 
-z_index_of_max_local_power = peaks[peak_nom][1] # corresponds to index of the max height
-a_index_of_max_local_power = peaks[peak_nom][0] # corresponds to the index of the max vertical wavelength
+z_index_of_max_local_power = local_maxima_coords[wave_nom][1] # corresponds to index of the max height
+a_index_of_max_local_power = local_maxima_coords[wave_nom][0] # corresponds to the index of the max vertical wavelength
 
 # Determine if other local maxima are found within the rectangualr boundary
-peaks_within_boundaries = datafunctions.peaks_inside_rectangular_boundary(peaks, [boundary_rows[0],boundary_rows[-1]], [boundary_cols[0],boundary_cols[-1]])
+local_max_within_boundaries = datafunctions.peaks_inside_rectangular_boundary(local_maxima_coords, [boundary_rows[0],boundary_rows[-1]], [boundary_cols[0],boundary_cols[-1]])
 
 ################### Plot Power Surface ###################
 
@@ -249,10 +249,10 @@ plottingfunctions.plot_power_surface(
     choose_data_frame_analyze["Geopot [m]"]/1000,
     power,
     u_periods,
-    peak_containers,
+    local_max_container,
     signif,
     coiMask,
-    peaks,
+    local_maxima_coords,
     colormap,
     starting_time_for_flight,
     path_to_save_figures + "/Power_Surfaces/",
@@ -262,12 +262,12 @@ plottingfunctions.plot_power_surface(
 ################### Inverse Wavelet Transform ###################
 
 # [Zink and Vincent, 2001] -- Reconstruct perturbations associated with the gravity wave packet within the determined rectangular boundary
-u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,peak_containers,u_scales,dj,dt)
-v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,peak_containers,v_scales,dj,dt)
-t_inverted_coeff = datafunctions.inverse_wavelet_transform(t_coef,peak_containers,t_scales,dj,dt)
+u_inverted_coeff = datafunctions.inverse_wavelet_transform(u_coef,local_max_container,u_scales,dj,dt)
+v_inverted_coeff = datafunctions.inverse_wavelet_transform(v_coef,local_max_container,v_scales,dj,dt)
+t_inverted_coeff = datafunctions.inverse_wavelet_transform(t_coef,local_max_container,t_scales,dj,dt)
 
 # Calculate the horizontal wind variance [m^2/s^2]
-horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_inverted_coeff, v_inverted_coeff,peaks_within_boundaries,peaks,peak_nom)
+horizontal_wind_variance = datafunctions.calculate_horizontal_wind_variance(u_inverted_coeff, v_inverted_coeff,local_max_within_boundaries,local_maxima_coords,wave_nom)
 
 # [Zink and Vincent, 2001] -- vertical extent of the gravity wave packet is associated with the FWHM of the horizontal wind variance
 vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max  = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
@@ -337,7 +337,7 @@ polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_
 # [Yoo et al, 2018] -- conditions for the wave packet
 if 0.5 <= polarization_factor < 1:
     print("\n")
-    print("d = %.2f -- Most likely an AGW"%polarization_factor)
+    print("d = %.4f -- Most likely an AGW"%polarization_factor)
     condition3 = "Gravity Wave"
 elif polarization_factor == 1:
     print("\n")
@@ -349,7 +349,7 @@ elif polarization_factor == 0:
     condition3 = "Not a Wave"
 else:
     print("\n")
-    print("d = %.2f -- Might not be an AGW. Polarization factor too low (d < 0.05) or unrealistic (d > 1) value"%polarization_factor)
+    print("d = %.4f -- Might not be an AGW. Polarization factor too low (d < 0.05) or unrealistic (d > 1) value"%polarization_factor)
     condition3 = "Might not be a Wave"
 
 # Pfenninger et. al, 1999] -- Eqn. 11
@@ -392,9 +392,6 @@ eta = (0.5) * np.arcsin(Stokes_Q / np.sqrt(Stokes_D**2 + Stokes_P**2 + Stokes_Q*
 axial_ratio = np.tan(eta)
 inverse_axial_ratio = np.abs(1/ axial_ratio) # [rad/s]
 
-
-################### Extracting Wave Parameters ###################
-
 # Eqn. 8 [Koushik et. al, 2019] -- intrinsic fequency: frequency observed in the reference frame moving with the background wind
 intrinsic_frequency = f_coriolis * inverse_axial_ratio # [rad/s]
 
@@ -423,9 +420,11 @@ mean_buoyancy_period = (2 * np.pi) / mean_buoyancy_frequency # [s]
 
 # [Murphy et al, 2014] -- Physical boundary check for frequency
 if not mean_buoyancy_frequency > intrinsic_frequency > f_coriolis:
+    print("\n")
     print("Not physical frequency")
     condition4 = "Not Physical"
 else:
+    print("\n")
     print("Physical frequency")
     condition4 = "Physical"
 
@@ -459,7 +458,8 @@ horizontal_wavelength = (2 * np.pi) / horizontal_wavenumber # [m]
 omega_squared = mean_buoyancy_frequency**2 * (horizontal_wavenumber**2 / vertical_wavenumber**2) + f_coriolis**2
 
 if intrinsic_frequency != np.sqrt(omega_squared):
-    print("Something isn't right")
+    print("\n")
+    print("Something isn't right. Intrinsice frequency doesn't equal omega")
 
 # [Murphy et al, 2014] -- Eqn 2
 # averages done over vertical span of the wave
@@ -512,22 +512,22 @@ rho = (choose_data_frame_analyze["P [hPa]"]**100)/(Rconst *temperature_K) # dens
 zonal_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iu_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[vertical_extent_coordx:vertical_extent_coordy])
 meridional_momentum_flux = -rho * (intrinsic_frequency*grav_constant/mean_buoyancy_frequency**2)*np.mean(iv_wave.real*it_wave.imag/ choose_data_frame_analyze["T [°C]"].iloc[vertical_extent_coordx:vertical_extent_coordy])
 
-extracted_wave_paramters = {"Wave": peak_nom+1, "Condition 1": condition1, "Condition 2": condition2, "Condition 3": condition3, "Condition 4": condition4, "Detection Height [km]":height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "polarization_factor": polarization_factor, "theta": theta, "omega [rad/s]": intrinsic_frequency, "T [min]": intrinsic_period/60, "N [rad/s]": mean_buoyancy_frequency, "N_period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "vertical wavenumber [1/m]": vertical_wavenumber, "vertical wavelength [m]": vertical_wavelength, "horizontal wavenumber [1/m]": horizontal_wavenumber, "horizontal wavelength [m]": horizontal_wavelength, "kinetic energy [J/kg]": kinetic_energy, "potential_energy [J/kg]": potential_energy,"Total Energy [J/kg]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh,"Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [m^2/s^2]": zonal_momentum_flux,"Meridional Momentum Flux [m^2/s^2]" :meridional_momentum_flux}
-
-
+extracted_wave_paramters = {"Wave": wave_nom+1, "Condition 1": condition1, "Condition 2": condition2, "Condition 3": condition3, "Condition 4": condition4, "Detection Height [km]":height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "polarization_factor": polarization_factor, "theta": theta, "omega [rad/s]": intrinsic_frequency, "T [min]": intrinsic_period/60, "N [rad/s]": mean_buoyancy_frequency, "N_period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "vertical wavenumber [1/m]": vertical_wavenumber, "vertical wavelength [m]": vertical_wavelength, "horizontal wavenumber [1/m]": horizontal_wavenumber, "horizontal wavelength [m]": horizontal_wavelength, "kinetic energy [J/kg]": kinetic_energy, "potential_energy [J/kg]": potential_energy,"Total Energy [J/kg]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh,"Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [m^2/s^2]": zonal_momentum_flux,"Meridional Momentum Flux [m^2/s^2]" :meridional_momentum_flux}
 
 ################### Hodograph Analysis ###################
 
-plottingfunctions.perturbations_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,it_wave.real,height_km_vertical_bounds)
+plottingfunctions.perturbations_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,it_wave.real,height_km_vertical_bounds,  path_to_save_figures + "/Dominant_Vertical_Perturbations/",save_fig=False)
 
-plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,height_km_vertical_bounds)
+plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,height_km_vertical_bounds, path_to_save_figures + "/Simple_Hodograph_Plot/",save_fig=False)
 
 # Fitting an ellipse
 coeffs = datafunctions.fit_ellipse(iu_wave.real,iv_wave.real)
-print('Fitted parameters:')
-print('a, b, c, d, e, f =', coeffs)
+print("\n")
+print("Fitted parameters:")
+# print('a, b, c, d, e, f =', coeffs)
 x0, y0, ap, bp, e, phi = datafunctions.cart_to_pol(coeffs)
 print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
 fit_u, fit_v = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
 
-plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0, condition1,inverse_axial_ratio,theta)
+plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0, condition1,inverse_axial_ratio,theta,  path_to_save_figures + "/Hodograph_Analysis/",
+    save_fig=False)
