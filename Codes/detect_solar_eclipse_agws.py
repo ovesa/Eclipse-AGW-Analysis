@@ -43,7 +43,7 @@ path_to_save_wave_results = "/media/oana/Data1/Annular_Eclipse_Analysis/"
 # Select all xls files that match
 fname = glob.glob(path + "*end.xls")
 
-file_nom = 2
+file_nom = 6
 
 # Read in dataset
 dat = datafunctions.read_grawmet_profile(fname[file_nom])
@@ -145,22 +145,22 @@ temperature_perturbations = datafunctions.derive_first_order_perturbations(
     height_km, temperature, temperature_fit
 )
 
-# Quick Plot of First-Order Perturbations Vertical Profiles
-plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
-    height_km,
-    u_zonal_speed,
-    v_meridional_speed,
-    temperature,
-    v_meridional_fit,
-    u_zonal_fit,
-    temperature_fit,
-    u_zonal_perturbations,
-    v_meridional_perturbations,
-    temperature_perturbations,
-    time_UTC.iloc[0],
-    path_to_save_figures + "/First_Order_Perturbations/",
-    save_fig=False
-)
+# # Quick Plot of First-Order Perturbations Vertical Profiles
+# plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
+#     height_km,
+#     u_zonal_speed,
+#     v_meridional_speed,
+#     temperature,
+#     v_meridional_fit,
+#     u_zonal_fit,
+#     temperature_fit,
+#     u_zonal_perturbations,
+#     v_meridional_perturbations,
+#     temperature_perturbations,
+#     time_UTC.iloc[0],
+#     path_to_save_figures + "/First_Order_Perturbations/",
+#     save_fig=False
+# )
 
 ################### Wavelet Analysis ###################
 # Wavelet Transform will isolate wave packets in wavenumber versus height space
@@ -249,7 +249,7 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
 
     ################### Plot Power Surface ###################
 
-    # colormap = cm.eclipse
+    colormap = cm.eclipse
 
     # plottingfunctions.plot_power_surface(
     #     choose_data_frame_analyze["Geopot [m]"]/1000,
@@ -528,6 +528,27 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
     # Amplitude [m^2/s^2]
     amplitude = power[wave_nom][z_index_of_max_local_power]
 
+
+    ################### Hodograph Analysis ###################
+
+    # plottingfunctions.perturbations_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,it_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "/Dominant_Vertical_Perturbations/",save_fig=False)
+
+    # plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "/Simple_Hodograph_Plot/",save_fig=False)
+
+    # Fitting an ellipse
+    coeffs = datafunctions.fit_ellipse(iu_wave.real,iv_wave.real)
+    print("\n")
+    print("Fitted parameters:")
+    # print('a, b, c, d, e, f =', coeffs)
+    x0, y0, ap, bp, e, phi = datafunctions.cart_to_pol(coeffs)
+    print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
+    fit_u, fit_v = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
+
+    # fig = plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0, condition1,inverse_axial_ratio,theta, starting_time_for_flight, wave_nom,  path_to_save_figures + "/Hodograph_Analysis/",
+    #     save_fig=False)
+
+
+
     extracted_wave_paramters = {"Wave": wave_nom+1, "Condition 1": condition1, "Condition 2": condition2, "Condition 3": condition3, "Condition 4": condition4, "Detection Height [km]": height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Amplitude [m^2/s^2]": amplitude, "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "polarization_factor": polarization_factor, "theta": theta, "omega [rad/s]": intrinsic_frequency, "T [min]": intrinsic_period/60, "N [rad/s]": mean_buoyancy_frequency, "N_period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "vertical wavenumber [1/m]": vertical_wavenumber, "vertical wavelength [m]": vertical_wavelength, "horizontal wavenumber [1/m]": horizontal_wavenumber, "horizontal wavelength [m]": horizontal_wavelength, "kinetic energy [J/kg]": kinetic_energy, "potential_energy [J/kg]": potential_energy,"Total Energy [J/kg]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh,"Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [m^2/s^2]": zonal_momentum_flux,"Meridional Momentum Flux [m^2/s^2]" :meridional_momentum_flux}
 
     if wave_nom == 0:
@@ -538,33 +559,16 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
     # Append a row corresponding to the current wave packet being analyzed
     final_results = pd.DataFrame(pd.concat([final_results,wave_results]))
 
+# Reset Index
 final_results = final_results.reset_index(drop=True)
 
 date_string = str(starting_time_for_flight.date())
 date_string = date_string.replace("-", "")
+time_string = str(starting_time_for_flight.time())
+time_string = time_string.replace(":", "")
 
 # Save wave results to xls file
 print("\n")
-print("Saving results for %s to xlsx format"%date_string)
-final_results.to_excel(path_to_save_wave_results + "%s_wave_results.xlsx"%date_string)
-
-################### Hodograph Analysis ###################
-
-fig = plottingfunctions.perturbations_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,it_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "/Dominant_Vertical_Perturbations/",save_fig=False)
-
-plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "/Simple_Hodograph_Plot/",save_fig=False)
-
-# Fitting an ellipse
-coeffs = datafunctions.fit_ellipse(iu_wave.real,iv_wave.real)
-print("\n")
-print("Fitted parameters:")
-# print('a, b, c, d, e, f =', coeffs)
-x0, y0, ap, bp, e, phi = datafunctions.cart_to_pol(coeffs)
-print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
-fit_u, fit_v = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
-
-fig = plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0, condition1,inverse_axial_ratio,theta, starting_time_for_flight, wave_nom,  path_to_save_figures + "/Hodograph_Analysis/",
-    save_fig=False)
-
-
+print("Saving results for %s to xlsx format"%starting_time_for_flight)
+final_results.to_excel(path_to_save_wave_results + "%s_%s_UTC_wave_results.xlsx"%(date_string,time_string))
 
