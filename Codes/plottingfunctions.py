@@ -143,8 +143,9 @@ def plot_vertical_profiles_with_residual_perturbations(
             + "/%s_%s_perturbations.png" % (date_string, time_string),
             bbox_inches="tight",
         )
+    plt.close(fig)
 
-    return fig
+    return
 
 
 def plot_power_surface(
@@ -271,7 +272,9 @@ def plot_power_surface(
             + "/%s_%s_wave%s_power_surface.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
-    return fig
+    plt.close(fig)
+
+    return
 
 
 def plot_potential_temperature_vs_pressure(potential_temperature_array, temperature_array, pressure_array, time, path_to_save_figure,save_fig=False,):
@@ -315,8 +318,9 @@ def plot_potential_temperature_vs_pressure(potential_temperature_array, temperat
                 + "/%s_potential_temperature_vs_pressure.png" % (date_string,),
                 bbox_inches="tight",
         )
+    plt.close(fig)
 
-    return fig
+    return
 
 
 def perturbations_associated_with_dominant_vertical_wavelengths(zonal_wind_perturbation, meridional_wind_perturbation,temperature_perturbations,height_km, time, nom,path_to_save_figure,save_fig=False,):
@@ -363,8 +367,9 @@ def perturbations_associated_with_dominant_vertical_wavelengths(zonal_wind_pertu
             bbox_inches="tight",
         )
 
+    plt.close(fig)
 
-    return fig
+    return
 
 def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_km,time, nom,path_to_save_figure,save_fig=False,):
     """
@@ -454,8 +459,8 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
             + "/%s_wave%s_simple_hodograph_plot.png" % (date_string, nom+1),
             bbox_inches="tight",
         )
-
-    return fig
+    plt.close(fig)
+    return
 
 def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max,time,nom, path_to_save_figure,save_fig=False,):
     """
@@ -502,7 +507,8 @@ def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, ver
             bbox_inches="tight",
         )
 
-    return fig
+    plt.close(fig)
+    return
 
 
 def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_perturbation,height_km, fitted_zonal_comps,fitted_meridional_comps,centerx,centery, title,magnitude,theta, time,nom,path_to_save_figure,save_fig=False,):
@@ -603,7 +609,8 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
             + "/%s_wave%s_hodograph_analysis.png" % (date_string, nom+1),
             bbox_inches="tight",
         )
+    plt.close(fig)
 
-    return fig
+    return
 
 

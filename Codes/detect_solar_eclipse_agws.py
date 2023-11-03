@@ -1,7 +1,6 @@
 ################### Necessary Libraries ###################
 
 import numpy as np
-import matplotlib.pyplot as plt
 import glob
 import cmasher as cm
 import matplotlib
@@ -10,7 +9,7 @@ import datafunctions
 from waveletFunctions import wave_signif
 import pandas as pd
 from tqdm import tqdm
-plt.ion()
+# plt.ion()
 
 ################### Plotting Properties ###################
 
@@ -145,22 +144,20 @@ temperature_perturbations = datafunctions.derive_first_order_perturbations(
     height_km, temperature, temperature_fit
 )
 
-# # Quick Plot of First-Order Perturbations Vertical Profiles
-# plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
-#     height_km,
-#     u_zonal_speed,
-#     v_meridional_speed,
-#     temperature,
-#     v_meridional_fit,
-#     u_zonal_fit,
-#     temperature_fit,
-#     u_zonal_perturbations,
-#     v_meridional_perturbations,
-#     temperature_perturbations,
-#     time_UTC.iloc[0],
-#     path_to_save_figures + "/First_Order_Perturbations/",
-#     save_fig=False
-# )
+# Quick Plot of First-Order Perturbations Vertical Profiles
+plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
+    height_km,
+    u_zonal_speed,
+    v_meridional_speed,
+    temperature,
+    v_meridional_fit,
+    u_zonal_fit,
+    temperature_fit,
+    u_zonal_perturbations,
+    v_meridional_perturbations,
+    temperature_perturbations,
+    time_UTC.iloc[0],
+    path_to_save_figures + "First_Order_Perturbations",save_fig=True,)
 
 ################### Wavelet Analysis ###################
 # Wavelet Transform will isolate wave packets in wavenumber versus height space
@@ -251,19 +248,19 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
 
     colormap = cm.eclipse
 
-    # plottingfunctions.plot_power_surface(
-    #     choose_data_frame_analyze["Geopot [m]"]/1000,
-    #     power,
-    #     u_periods,
-    #     rectangular_boundary_container,
-    #     signif,
-    #     coiMask,
-    #     local_maxima_coords,
-    #     colormap,
-    #     starting_time_for_flight, wave_nom,
-    #     path_to_save_figures + "/Power_Surfaces/",
-    #     save_fig=False,
-    # )
+    plottingfunctions.plot_power_surface(
+        choose_data_frame_analyze["Geopot [m]"]/1000,
+        power,
+        u_periods,
+        rectangular_boundary_container,
+        signif,
+        coiMask,
+        local_maxima_coords,
+        colormap,
+        starting_time_for_flight, wave_nom,
+        path_to_save_figures + "Power_Surfaces",
+        save_fig=True,
+    )
 
     ################### Inverse Wavelet Transform ###################
 
@@ -279,7 +276,7 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
     vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max  = datafunctions.wave_packet_FWHM_indices(horizontal_wind_variance)
 
     # Quick plot of the horizontal wind variance
-    # plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max,starting_time_for_flight,wave_nom,path_to_save_figures,save_fig=False)
+    plottingfunctions.plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, vertical_extent_coordy,max_value_index,half_max,starting_time_for_flight,wave_nom,path_to_save_figures + "Wind_Variance",save_fig=True)
 
     # Only consider the perturbations associated with the vertical extent of the wave packet
     iu_wave = (u_inverted_coeff)[vertical_extent_coordx:vertical_extent_coordy]
@@ -531,7 +528,7 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
 
     ################### Hodograph Analysis ###################
 
-    # plottingfunctions.perturbations_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,it_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "/Dominant_Vertical_Perturbations/",save_fig=False)
+    plottingfunctions.perturbations_associated_with_dominant_vertical_wavelengths(iu_wave.real, iv_wave.real,it_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "Dominant_Vertical_Perturbations",save_fig=True)
 
     # plottingfunctions.plot_hodograph(iu_wave.real, iv_wave.real,height_km_vertical_bounds, starting_time_for_flight,wave_nom, path_to_save_figures + "/Simple_Hodograph_Plot/",save_fig=False)
 
@@ -544,8 +541,8 @@ for nom in tqdm(range(0,len(local_maxima_coords))):
     print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
     fit_u, fit_v = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
 
-    # fig = plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0, condition1,inverse_axial_ratio,theta, starting_time_for_flight, wave_nom,  path_to_save_figures + "/Hodograph_Analysis/",
-    #     save_fig=False)
+    fig = plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_bounds, fit_u,fit_v,x0,y0, condition1,inverse_axial_ratio,theta, starting_time_for_flight, wave_nom,  path_to_save_figures + "Hodograph_Analysis",
+        save_fig=True)
 
 
 
