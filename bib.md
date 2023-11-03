@@ -1,16 +1,15 @@
-# General websites and journals used to aid with the creation of this code.
+# List of Websites and Journals Used
 
 ## Websites
 
-- https://geo.libretexts.org/Bookshelves/Meteorology_and_Climate_Science/Practical_Meteorology_(Stull)/01%3A_Atmospheric_Basics/1.07%3A_Atmospheric_Structure
-- https://support.outpostcentral.com/hc/en-us/articles/217905463-Wind-speed-calculation
-- http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv
-- https://slideplayer.com/slide/8175190/
-- https://www.aoml.noaa.gov/ftp/hrd/annane/prelim_notes/Potential_Temperature.pdf
-- https://glossary.ametsoc.org/wiki/Potential_temperature
-- http://weatherclimatelab.mit.edu/wp-content/uploads/2018/02/Potential-temperature.pdf
-- https://www.teos-10.org/pubs/gsw/pdf/f.pdf
-
+- [https://geo.libretexts.org/Bookshelves/Meteorology_and_Climate_Science/Practical_Meteorology_(Stull)/01%3A_Atmospheric_Basics/1.07%3A_Atmospheric_Structure](https://geo.libretexts.org/Bookshelves/Meteorology_and_Climate_Science/Practical_Meteorology_(Stull)/01%3A_Atmospheric_Basics/1.07%3A_Atmospheric_Structure)
+- [https://support.outpostcentral.com/hc/en-us/articles/217905463-Wind-speed-calculation](https://support.outpostcentral.com/hc/en-us/articles/217905463-Wind-speed-calculation)
+- [http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv](http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv)
+- [https://slideplayer.com/slide/8175190/](https://slideplayer.com/slide/8175190/)
+- [https://www.aoml.noaa.gov/ftp/hrd/annane/prelim_notes/Potential_Temperature.pdf](https://www.aoml.noaa.gov/ftp/hrd/annane/prelim_notes/Potential_Temperature.pdf)
+- [https://glossary.ametsoc.org/wiki/Potential_temperature](https://glossary.ametsoc.org/wiki/Potential_temperature)
+- [http://weatherclimatelab.mit.edu/wp-content/uploads/2018/02/Potential-temperature.pdf](http://weatherclimatelab.mit.edu/wp-content/uploads/2018/02/Potential-temperature.pdf)
+- [https://www.teos-10.org/pubs/gsw/pdf/f.pdf](https://www.teos-10.org/pubs/gsw/pdf/f.pdf)
 
 ## Journals
 
