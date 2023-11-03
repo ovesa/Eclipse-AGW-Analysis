@@ -388,11 +388,16 @@ for nom in tqdm(range(0,sequence_end),desc="Looping through all identified local
         print("d = %.2f -- Not an AGW; no polarization relationship"%polarization_factor)
         print("\n")
         condition2 = "Not a Wave"
+    elif polarization_factor > 1:
+        print("\n")
+        print("d = %.4f -- Not a wave. Polarization factor too unrealistic (d > 1) low of value"%polarization_factor)
+        print("\n")
+        condition2 = "Not a Wave"
     else:
         print("\n")
-        print("d = %.4f -- Might not be an AGW. Polarization factor too low (d < 0.05) or unrealistic (d > 1) value"%polarization_factor)
+        print("d = %.4f -- Not a wave. Polarization factor too low (d < 0.05) of a value"%polarization_factor)
         print("\n")
-        condition2 = "Might not be a Wave"
+        condition2 = "Not a Wave"
 
     # Pfenninger et al., 1999] -- Eqn. 11
     # Orientation of major axis - direction of propagation of gravity wave (deg clockwise from N)
@@ -475,7 +480,7 @@ for nom in tqdm(range(0,sequence_end),desc="Looping through all identified local
 
     # [Pfenninger et al., 1999] -- Eqn 15 -- Richardson Number 
     # Dynamic shear instability function of wind shear and temperature gradient
-    richardson_number = buoyancy_frequency**2 /( np.gradient(u_zonal_perturbations,height_km/1000)**2 + np.gradient(v_meridional_perturbations,height_km/1000)**2   )
+    richardson_number = buoyancy_frequency**2 /(np.gradient(u_zonal_perturbations,spatial_resolution)**2 + np.gradient(v_meridional_perturbations,spatial_resolution)**2   )
     richardson_number = richardson_number.iloc[vertical_extent_coordx:vertical_extent_coordy].mean(skipna=True)
 
     # Conditions from [Pfenninger et al., 1999] 
@@ -502,7 +507,10 @@ for nom in tqdm(range(0,sequence_end),desc="Looping through all identified local
     if intrinsic_frequency != np.sqrt(omega_squared):
         print("\n")
         print("Something isn't right. Intrinsic frequency doesn't equal omega")
+        condition4 = "Fail"
         print("\n")
+    else:
+        condition4 = "Pass"
 
     # [Murphy et al., 2014] -- Eqn 2
     # Averages done over vertical span of the wave
@@ -584,7 +592,7 @@ for nom in tqdm(range(0,sequence_end),desc="Looping through all identified local
         save_fig=True)
 
     # Extracted wave paramets in a dictionary
-    extracted_wave_paramters = {"Wave": wave_nom+1, "Condition 1": condition1, "Condition 2": condition2, "Condition 3": condition3, "Rotation": ellipse_rotation, "Detection Height [km]": height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Amplitude [m^2/s^2]": amplitude, "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "Polarization Factor": polarization_factor, "Propagation Direction [degree]": np.rad2deg(theta), "Wave Frequency [rad/s]": intrinsic_frequency, "Wave Period [min]": intrinsic_period/60, "Brunt-Vaisala Frequency [rad/s]": mean_buoyancy_frequency, "Brunt-Vaisala Period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "Vertical Wavenumber [1/m]": vertical_wavenumber, "Vertical Wavelength [m]": vertical_wavelength, "Horizontal Wavenumber [1/m]": horizontal_wavenumber, "Horizontal Wavelength [m]": horizontal_wavelength, "Kinetic Energy [m^2/s^2]": kinetic_energy, "Potential_Energy [m^2/s^2]": potential_energy, "Total Energy [m^2/s^2]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh, "Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [Pa]": zonal_momentum_flux, "Meridional Momentum Flux [Pa]": meridional_momentum_flux}
+    extracted_wave_paramters = {"Wave": wave_nom+1, "Condition 1": condition1, "Condition 2": condition2, "Condition 3": condition3, "Condition 4": condition4, "Rotation": ellipse_rotation, "Detection Height [km]": height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Amplitude [m^2/s^2]": amplitude, "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "Polarization Factor": polarization_factor, "Propagation Direction [degree]": np.rad2deg(theta), "Wave Frequency [rad/s]": intrinsic_frequency, "Wave Period [min]": intrinsic_period/60, "Brunt-Vaisala Frequency [rad/s]": mean_buoyancy_frequency, "Brunt-Vaisala Period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "Vertical Wavenumber [1/m]": vertical_wavenumber, "Vertical Wavelength [m]": vertical_wavelength, "Horizontal Wavenumber [1/m]": horizontal_wavenumber, "Horizontal Wavelength [m]": horizontal_wavelength, "Kinetic Energy [m^2/s^2]": kinetic_energy, "Potential_Energy [m^2/s^2]": potential_energy, "Total Energy [m^2/s^2]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh, "Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [Pa]": zonal_momentum_flux, "Meridional Momentum Flux [Pa]": meridional_momentum_flux}
 
     if wave_nom == 0:
         # Set up intial dataframe; only at the very beginning

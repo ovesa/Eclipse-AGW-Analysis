@@ -144,7 +144,7 @@ def plot_vertical_profiles_with_residual_perturbations(
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%.2fUTC_perturbations.png" % (date_string, time_string),
+            + "/%s_%.0fUTC_perturbations.png" % (date_string, time_string),
             bbox_inches="tight",
         )
     plt.close(fig)
@@ -207,7 +207,7 @@ def plot_power_surface(
     ax.minorticks_on()
     
     cb = fig.colorbar(im, ax=ax)
-    cb.ax.set_ylabel("Power [m$^2$/s$^2$]")
+    cb.ax.set_ylabel(r"Power [m$^2$/s$^2$]")
 
 
     ax.contour(
@@ -276,7 +276,7 @@ def plot_power_surface(
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%.2fUTC_wave%s_power_surface.png" % (date_string, time_string, nom+1),
+            + "/%s_%.0fUTC_wave%s_power_surface.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
     plt.close(fig)
@@ -378,7 +378,7 @@ def perturbations_associated_with_dominant_vertical_wavelengths(zonal_wind_pertu
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%.2fUTC_wave%s_dominant_perturbations.png" % (date_string, time_string, nom+1),
+            + "/%s_%.0fUTC_wave%s_dominant_perturbations.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
 
@@ -420,7 +420,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
     )
 
     # ax.annotate(
-    #     "%.2f km" % (height_km.iloc[0]), 
+    #     "%.0f km" % (height_km.iloc[0]), 
     #    xy= (zonal_wind_perturbation[0], meridional_wind_perturbation[0]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     # )
     
@@ -435,7 +435,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
     )
 
     # ax.annotate(
-    #     "%.2f km" % (height_km.iloc[middle_x_point]), 
+    #     "%.0f km" % (height_km.iloc[middle_x_point]), 
     #    xy= (zonal_wind_perturbation[middle_x_point], meridional_wind_perturbation[middle_x_point]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     # )
 
@@ -449,7 +449,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
     )
 
     # ax.annotate(
-    #     "%.2f km" % (height_km.iloc[-1]),
+    #     "%.0f km" % (height_km.iloc[-1]),
     #     xy=(zonal_wind_perturbation[-1], meridional_wind_perturbation[-1]) , xycoords='data',xytext=(3, 1), textcoords='offset points',
     # )
 
@@ -476,7 +476,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%.2f_UTC_wave%s_simple_hodograph_plot.png" % (date_string, time_string,nom+1),
+            + "/%s_%.0f_UTC_wave%s_simple_hodograph_plot.png" % (date_string, time_string,nom+1),
             bbox_inches="tight",
         )
     plt.close(fig)
@@ -527,7 +527,7 @@ def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, ver
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%.2fUTC_wave%s_FWHM.png" % (date_string,time_string, nom+1),
+            + "/%s_%.0fUTC_wave%s_FWHM.png" % (date_string,time_string, nom+1),
             bbox_inches="tight",
         )
 
@@ -584,7 +584,7 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
     )
 
     # ax.annotate(
-    #     "%.2f km" % (dataframe.iloc[0]), 
+    #     "%.0f km" % (dataframe.iloc[0]), 
     #    xy= (zonal_wind_perturbation[0], meridional_wind_perturbation[0]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     # )
     
@@ -599,7 +599,7 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
     )
 
     # ax.annotate(
-    #     "%.2f km" % (dataframe.iloc[middle_x_point]), 
+    #     "%.0f km" % (dataframe.iloc[middle_x_point]), 
     #    xy= (zonal_wind_perturbation[middle_x_point], meridional_wind_perturbation[middle_x_point]), xycoords='data',xytext=(3, 1), textcoords='offset points',
     # )
 
@@ -633,7 +633,7 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
         
         fig.savefig(
             path_to_save_figure
-            + "/%s_%.2fUTC_wave%s_hodograph_analysis.png" % (date_string, time_string, nom+1),
+            + "/%s_%.0fUTC_wave%s_hodograph_analysis.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
     plt.close(fig)
