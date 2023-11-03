@@ -51,6 +51,7 @@ if not os.path.isdir(path_to_save_wave_results):
 fname = glob.glob(path_to_data + "*end.xls")
 
 # Select which file to read in
+# print(fname) to check out files
 file_nom = 6
 
 # Read in dataset
