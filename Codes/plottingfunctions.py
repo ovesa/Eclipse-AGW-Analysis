@@ -341,7 +341,7 @@ def perturbations_associated_with_dominant_vertical_wavelengths(zonal_wind_pertu
     """
     
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
-    ax.set_title("Dominant Vertical Wavelengths \n Associated with Wave")
+    ax.set_title("Dominant Vertical Wavelengths \n Associated with Wave %s"%(nom+1))
     ax.plot(zonal_wind_perturbation,height_km, color="k", linewidth=1.5, zorder=0, label="Zonal Wind Speed [m/s]")
     ax.plot(meridional_wind_perturbation,height_km, color="red", linewidth=1.5, zorder=0,label="Meridional Wind Speed [m/s]")
     ax.plot(temperature_perturbations,height_km, color="blue", linewidth=1.5, linestyle='--', zorder=0,label="Temperature [C]")
@@ -388,7 +388,7 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
     ax.plot(zonal_wind_perturbation, meridional_wind_perturbation, color="k", linewidth=1.5, linestyle='--',zorder=0)
     
-    ax.set_title("Hodograph Analysis")
+    ax.set_title("Wave %s: Hodograph Analysis"%(nom+1))
 
     ax.scatter(
         zonal_wind_perturbation[0],
@@ -479,7 +479,7 @@ def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, ver
     """
     
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
-    ax.set_title("Detect FWHM")
+    ax.set_title("Wave %s: Detect FWHM"%(nom+1))
     ax.plot(np.arange(len(horizontal_wind_variance)), horizontal_wind_variance, color='k',zorder=0,)
     ax.scatter(max_value_index, horizontal_wind_variance[max_value_index], s=40,  color='gold', edgecolor='k',zorder=1)
     ax.axhline(y=half_max, linestyle='--', color='k',linewidth=0.8,zorder=0)
@@ -532,7 +532,7 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
     """    
     
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
-    ax.set_title(title)
+    ax.set_title("Wave %s: %s"%(nom+1,title))
 
     ax.scatter(zonal_wind_perturbation, meridional_wind_perturbation, color='k', s=15, marker='x', zorder=1,label="Data")
     ax.axhline(y=centery,linestyle='--',  color='b', linewidth=0.5, zorder=1)
