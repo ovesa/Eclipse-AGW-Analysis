@@ -197,8 +197,8 @@ def interpolate_data(dataframe, interpolation_limit):
     # If missing data in the height column hits the interpolation_limit variable, we don't interpolate and
     # leave those values as NaNs
     # Regular Pandas interpolation misses some values
-    # [https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html]
-    # [https://stackoverflow.com/questions/30533021/interpolate-or-extrapolate-only-small-gaps-in-pandas-dataframe]
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html
+    # https://stackoverflow.com/questions/30533021/interpolate-or-extrapolate-only-small-gaps-in-pandas-dataframe
     # Solution: interpolate the data and then apply a mask to reset the interpolation limit gap to NaN values
 
     # Create a mask of the orginal DataFrame
@@ -310,7 +310,7 @@ def compute_zonal_and_meridional_speeds(
     """
     Calculate the zonal and meridional wind speeds from the total wind speed. Grab the temperature array, as well.
     Function not currently in use as GRAWMET already calculated these values.
-    [http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv].
+    http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv.
 
     Arguments:
         dataframe -- The Pandas DataFrame
@@ -339,7 +339,7 @@ def compute_zonal_and_meridional_speeds(
 def extract_wind_components_and_temperature(dataframe):
     """
     Extracts the temperature array, and the zonal and meridional wind speeds from the DataFrame.
-    [http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv].
+    http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv.
 
     Arguments:
         dataframe -- The Pandas DataFrame.
@@ -383,9 +383,9 @@ def compute_polynomial_fits(dataframe, array, order=2):
 def derive_first_order_perturbations(height_km, perturbations, polynomial_fit):
     """
     Derive the first-order perturbations, which are thought to caused by atmospheric gravity waves
-    [Moffat-Griffin et. al, 2011]. After computing the least squares polynomial fit for the
+    [Moffat-Griffin et al., 2011]. After computing the least squares polynomial fit for the
     perturbation (specifically the zonal and meridional wind perturbations), subtract it from the
-    original vertical profiles. This removes the background pertubations [Moffat-Griffin et. al, 2011]
+    original vertical profiles. This removes the background pertubations [Moffat-Griffin et al., 2011]
     & [Vincent and Alexander, 2000].
 
     Arguments:
@@ -411,7 +411,7 @@ def derive_first_order_perturbations(height_km, perturbations, polynomial_fit):
 def acorr(array, lags):
     """
     Performs the autocorrelation on a signal. The autocorrelation is normalized on the [-1,1] interval
-    [https://stackoverflow.com/questions/71493065/what-is-the-difference-between-the-autocorrelation-functions-provided-by-statsmo].
+    https://stackoverflow.com/questions/71493065/what-is-the-difference-between-the-autocorrelation-functions-provided-by-statsmo.
 
     Arguments:
         array -- The wavelet coefficient array to calculate the statistical autocorrelation.
