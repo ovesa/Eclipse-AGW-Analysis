@@ -7,7 +7,6 @@ import copy
 from scipy.signal import argrelmin
 from skimage.feature import peak_local_max
 import datetime
-import os
 from waveletFunctions import wavelet
 
 ###########################################################
@@ -57,7 +56,9 @@ def grab_initial_grawmet_profile_parameters(dataframe):
 
     # Check for if this particular column exists
     if "Time (UTC)" not in dataframe.columns:
+        print("\n")
         print("Time grid not found. Check column headings")
+        print("\n")
         UTC_time_grid, starting_time_for_flight, ending_time_for_flight = 0, 0, 0
 
     else:
@@ -138,10 +139,17 @@ def clean_data(dataframe, tropopause_height, original_data_shape):
 
     # Basic checks
     if dataframe.empty:
+        print("\n")
         print("Empty DataFrame; Double Check Data")
+        print("\n")
+
     else:
+        print("\n")
         print("Removed %s rows" % (original_data_shape[0] - dataframe.shape[0]))
+        print("\n")
         print("Shape of dataframe after cleaning up rows: ", dataframe.shape)
+        print("\n")
+
 
     return dataframe
 
@@ -181,7 +189,9 @@ def interpolate_data(dataframe, interpolation_limit):
         .reset_index(drop=True)
     )
 
+    print("\n")
     print("New shape of dataframe: ", dataframe.shape)
+    print("\n")
 
     # Now, we need to interpolate the data as to fill in the missing values in all the columns
     # If missing data in the height column hits the interpolation_limit variable, we don't interpolate and
@@ -249,11 +259,18 @@ def check_data_for_interpolation_limit_set(dataframe, interpolation_limit):
 
     # Check if the DataFrame has been split
     if len(dataframe) == 1:
+        print("\n")
         print("There is 1 section of data")
+        print("\n")
+
     elif len(dataframe) == 0:
-        print("No data to analyze. Double check dataframe")
+        print("\n")
+        print("No data to analyze; double check input file.")
+        print("\n")
     else:
+        print("\n")
         print("There are %s sections of data" % (len(dataframe)))
+        print("\n")
 
     return dataframe
 
@@ -704,22 +721,23 @@ def wave_packet_FWHM_indices(horizontal_wind_variance):
     
     return vertical_extent_coordx, vertical_extent_coordy, max_value_index, half_max
 
-
 # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
-def fit_ellipse(x, y):
+def fit_ellipse(zonal_perturbations, meridional_perturbations):
     """
-    Fit the coefficients a,b,c,d,e,f, representing an ellipse described by
-    the formula F(x,y) = ax^2 + bxy + cy^2 + dx + ey + f = 0 to the provided
-    arrays of data points x=[x1, x2, ..., xn] and y=[y1, y2, ..., yn].
-
+    Fit the ellipse coefficients a, b, c, d, e, and f described by ax^2 + bxy + cy^2 + dx + ey + f = 0.
     Based on the algorithm of Halir and Flusser, "Numerically stable direct
-    least squares fitting of ellipses'.
+    least squares fitting of ellipses'. Copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/.
 
+    Arguments:
+        x -- Zonal perturbations [m/s].
+        y -- Meridional perturbations [m/s].
+
+    Returns:
+        The cartesian ellipse coefficients a, b, c, d, e, and f.
     """
-    
     # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
-    D1 = np.vstack([x**2, x*y, y**2]).T
-    D2 = np.vstack([x, y, np.ones(len(x))]).T
+    D1 = np.vstack([zonal_perturbations**2, zonal_perturbations*meridional_perturbations, meridional_perturbations**2]).T
+    D2 = np.vstack([zonal_perturbations, meridional_perturbations, np.ones(len(zonal_perturbations))]).T
     S1 = D1.T @ D1
     S2 = D1.T @ D2
     S3 = D2.T @ D2
@@ -735,12 +753,18 @@ def fit_ellipse(x, y):
 
 def cart_to_pol(coeffs):
     """
-    Convert the cartesian conic coefficients, (a, b, c, d, e, f), to the
-    ellipse parameters, where F(x, y) = ax^2 + bxy + cy^2 + dx + ey + f = 0.
-    The returned parameters are x0, y0, ap, bp, e, phi, where (x0, y0) is the
-    ellipse centre; (ap, bp) are the semi-major and semi-minor axes,
-    respectively; e is the eccentricity; and phi is the rotation of the semi-
-    major axis from the x-axis.
+    Convert cartesian conic coefficients to ellipse parameters. Copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/.
+    
+    Arguments:
+        coeffs -- The ellipse cartesian conic coefficients
+
+    Raises:
+        ValueError: Not an ellipse.
+
+    Returns:
+        The returned parameters are x0, y0, ap, bp, e, phi, where (x0, y0) is the ellipse centre; 
+        (ap, bp) are the semi-major and semi-minor axes, respectively; e is the eccentricity; 
+        and phi is the rotation of the semi-major axis from the x-axis.
     """
     
     # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
@@ -795,15 +819,26 @@ def cart_to_pol(coeffs):
 
     return x0, y0, ap, bp, e, phi
 
-
+    
 def get_ellipse_pts(params, npts=100, tmin=0, tmax=2*np.pi):
     """
-    Return npts points on the ellipse described by the params = x0, y0, ap,
-    bp, e, phi for values of the parametric variable t between tmin and tmax.
+    Returns points on the ellipse described by the parameters x0, y0, ap,
+    bp, e, and phi for values of the parametric variable t between tmin and tmax.
+    Copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/.
 
-    """
+    Arguments:
+        params -- The fitted ellipse parameters.
+
+    Keyword Arguments:
+        npts -- Number of points in array (default: {100})
+        tmin -- Minimum parametric variable (default: {0})
+        tmax -- Mazimum parametric variable (default: {2*np.pi})
+
+    Returns:
+        _description_
+    """  
+    
     # Following equations are copied from https://scipython.com/blog/direct-linear-least-squares-fitting-of-an-ellipse/
-
     x0, y0, ap, bp, e, phi = params
     # A grid of the parametric variable, t.
     t = np.linspace(tmin, tmax, npts)

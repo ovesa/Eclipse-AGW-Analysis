@@ -11,6 +11,7 @@ import pandas as pd
 from tqdm import tqdm
 # plt.ion()
 import os
+
 ################### Plotting Properties ###################
 
 tex_fonts = {
@@ -241,8 +242,11 @@ coiMask = np.array(
 # Extract coordinates of the local maxima above a threshold and within the cone of influence and signifance levels
 local_maxima_coords = datafunctions.find_local_maxima(power, 0.011, coiMask, signif)
 
+# Sequence End
+sequence_end = len(local_maxima_coords)
+
 # Loop through all local_maxima_coords
-for nom in tqdm(range(0,1)):
+for nom in tqdm(range(0,sequence_end),desc="Looping through all identified local maxima"):
     wave_nom = nom
 
     local_max = local_maxima_coords[wave_nom]
@@ -360,10 +364,10 @@ for nom in tqdm(range(0,1)):
         print("\n")
         print("Might not be an AGW; representative of poor wave activity")
         print("\n")
-        condition2 = "Fail"
+        condition1 = "Fail"
     else:
         print("\n")
-        condition2 = "Pass"
+        condition1 = "Pass"
 
     # degree of polarization -- stastical measure of the coherence of the wave field
     polarization_factor = np.sqrt(Stokes_P**2 + Stokes_D**2 + Stokes_Q**2) / Stokes_I
@@ -373,22 +377,22 @@ for nom in tqdm(range(0,1)):
         print("\n")
         print("d = %.4f -- Most likely an AGW"%polarization_factor)
         print("\n")
-        condition3 = "Gravity Wave"
+        condition2 = "Gravity Wave"
     elif polarization_factor == 1:
         print("\n")
         print("d = %.2f -- Monochromatic Wave"%polarization_factor)
         print("\n")
-        condition3 = "Monochromatic Wave"
+        condition2 = "Monochromatic Wave"
     elif polarization_factor == 0:
         print("\n")
         print("d = %.2f -- Not an AGW; no polarization relationship"%polarization_factor)
         print("\n")
-        condition3 = "Not a Wave"
+        condition2 = "Not a Wave"
     else:
         print("\n")
         print("d = %.4f -- Might not be an AGW. Polarization factor too low (d < 0.05) or unrealistic (d > 1) value"%polarization_factor)
         print("\n")
-        condition3 = "Might not be a Wave"
+        condition2 = "Might not be a Wave"
 
     # Pfenninger et al., 1999] -- Eqn. 11
     # Orientation of major axis - direction of propagation of gravity wave (deg clockwise from N)
@@ -463,11 +467,11 @@ for nom in tqdm(range(0,1)):
     if not mean_buoyancy_frequency > intrinsic_frequency > f_coriolis:
         print("\n")
         print("Not physical frequency")
-        condition4 = "Not Physical"
+        condition3 = "Not Physical"
     else:
         print("\n")
         print("Physical frequency")
-        condition4 = "Physical"
+        condition3 = "Physical"
 
     # [Pfenninger et al., 1999] -- Eqn 15 -- Richardson Number 
     # Dynamic shear instability function of wind shear and temperature gradient
@@ -498,6 +502,7 @@ for nom in tqdm(range(0,1)):
     if intrinsic_frequency != np.sqrt(omega_squared):
         print("\n")
         print("Something isn't right. Intrinsic frequency doesn't equal omega")
+        print("\n")
 
     # [Murphy et al., 2014] -- Eqn 2
     # Averages done over vertical span of the wave
@@ -572,13 +577,14 @@ for nom in tqdm(range(0,1)):
     # print('a, b, c, d, e, f =', coeffs)
     x0, y0, ap, bp, e, phi = datafunctions.cart_to_pol(coeffs)
     print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
+    print("\n")
     fit_u, fit_v = datafunctions.get_ellipse_pts((x0, y0, ap, bp, e, phi))
 
     fig = plottingfunctions.plot_hodograph_with_fitted_ellipse(iu_wave.real, iv_wave.real,height_km_vertical_extent, fit_u,fit_v,x0,y0, ellipse_rotation,inverse_axial_ratio,theta, starting_time_for_flight, wave_nom,  path_to_save_figures + "Hodograph_Analysis",
         save_fig=True)
 
     # Extracted wave paramets in a dictionary
-    extracted_wave_paramters = {"Wave": wave_nom+1, "Rotation": ellipse_rotation, "Condition 2": condition2, "Condition 3": condition3, "Condition 4": condition4, "Detection Height [km]": height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Amplitude [m^2/s^2]": amplitude, "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "polarization_factor": polarization_factor, "theta": theta, "omega [rad/s]": intrinsic_frequency, "T [min]": intrinsic_period/60, "N [rad/s]": mean_buoyancy_frequency, "N_period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "vertical wavenumber [1/m]": vertical_wavenumber, "vertical wavelength [m]": vertical_wavelength, "horizontal wavenumber [1/m]": horizontal_wavenumber, "horizontal wavelength [m]": horizontal_wavelength, "kinetic energy [m^2/s^2]": kinetic_energy, "potential_energy [m^2/s^2]": potential_energy,"Total Energy [m^2/s^2]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh,"Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [Pa]": zonal_momentum_flux,"Meridional Momentum Flux [Pa]" :meridional_momentum_flux}
+    extracted_wave_paramters = {"Wave": wave_nom+1, "Condition 1": condition1, "Condition 2": condition2, "Condition 3": condition3, "Rotation": ellipse_rotation, "Detection Height [km]": height_km.iloc[z_index_of_max_local_power], "Time Detected [UTC]": str(time_UTC.iloc[z_index_of_max_local_power]), "Amplitude [m^2/s^2]": amplitude, "Stokes I": Stokes_I, "Stokes D": Stokes_D, "Stokes Q": Stokes_Q, "Stokes P": Stokes_P, "Polarization Factor": polarization_factor, "Propagation Direction [degree]": np.rad2deg(theta), "Wave Frequency [rad/s]": intrinsic_frequency, "Wave Period [min]": intrinsic_period/60, "Brunt-Vaisala Frequency [rad/s]": mean_buoyancy_frequency, "Brunt-Vaisala Period [min]": mean_buoyancy_period, "Richardson Number": richardson_number, "Vertical Wavenumber [1/m]": vertical_wavenumber, "Vertical Wavelength [m]": vertical_wavelength, "Horizontal Wavenumber [1/m]": horizontal_wavenumber, "Horizontal Wavelength [m]": horizontal_wavelength, "Kinetic Energy [m^2/s^2]": kinetic_energy, "Potential_Energy [m^2/s^2]": potential_energy, "Total Energy [m^2/s^2]": total_energy_of_packet, "Vertical Group Velocity [m/s]": cgz, "Horizontal Group Velocity [m/s]": cgh, "Vertical Phase Speed [m/s]": cz, "Horizontal Phase Speed [m/s]": c_hor, "Zonal Momentum Flux [Pa]": zonal_momentum_flux, "Meridional Momentum Flux [Pa]": meridional_momentum_flux}
 
     if wave_nom == 0:
         # Set up intial dataframe; only at the very beginning
@@ -594,13 +600,9 @@ for nom in tqdm(range(0,1)):
 # Reset Index
 final_results = final_results.reset_index(drop=True)
 
-date_string = str(starting_time_for_flight.date())
-date_string = date_string.replace("-", "")
-time_string = str(starting_time_for_flight.time())
-time_string = time_string.replace(":", "")
+date_string, time_string = datafunctions.convert_timestamps_to_strings(starting_time_for_flight)
 
 # Save wave results to xls file
 print("\n")
-print("Saving results for %s to xlsx format"%starting_time_for_flight)
-final_results.to_excel(path_to_save_wave_results + "%s_%s_UTC_wave_results.xlsx"%(date_string,time_string))
-
+print("Saving results for %s UTC to xlsx format"%starting_time_for_flight)
+final_results.to_excel(path_to_save_wave_results + "%s_%.0fUTC_wave_results.xlsx"%(date_string,time_string),sheet_name="%.0fUTC"%time_string, index=False)
