@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
+import os 
+import datafunctions
 
 def plot_vertical_profiles_with_residual_perturbations(
     height_km,
@@ -133,14 +135,16 @@ def plot_vertical_profiles_with_residual_perturbations(
     fig.tight_layout()
 
     if save_fig:
-        date_string = str(time.date())
-        date_string = date_string.replace("-", "")
-        time_string = str(time.time())
-        time_string = time_string.replace(":", "")
+        
+        # If folder doesn't exist, create it        
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+        
+        date_string, time_string = datafunctions.convert_timestamps_to_strings(time)
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%s_perturbations.png" % (date_string, time_string),
+            + "/%s_%.2fUTC_perturbations.png" % (date_string, time_string),
             bbox_inches="tight",
         )
     plt.close(fig)
@@ -262,14 +266,17 @@ def plot_power_surface(
     plt.tight_layout()
 
     if save_fig:
-        date_string = str(time.date())
-        date_string = date_string.replace("-", "")
-        time_string = str(time.time())
-        time_string = time_string.replace(":", "")
+        
+        # If folder doesn't exist, create it
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+            
+        date_string, time_string = datafunctions.convert_timestamps_to_strings(time)
+        
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_%s_wave%s_power_surface.png" % (date_string, time_string, nom+1),
+            + "/%s_%.2fUTC_wave%s_power_surface.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
     plt.close(fig)
@@ -310,8 +317,12 @@ def plot_potential_temperature_vs_pressure(potential_temperature_array, temperat
     fig.tight_layout()
 
     if save_fig:
-            date_string = str(time.date())
-            date_string = date_string.replace("-", "")
+     
+        # If folder doesn't exist, create it 
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+            
+            date_string, _ = datafunctions.convert_timestamps_to_strings(time)
     
             fig.savefig(
                 path_to_save_figure
@@ -345,7 +356,7 @@ def perturbations_associated_with_dominant_vertical_wavelengths(zonal_wind_pertu
     """
     
     fig, ax = plt.subplots(1,1,figsize=[8, 6])  
-    ax.set_title("Dominant Vertical Wavelengths \n Associated with Wave %s"%(nom+1))
+    ax.set_title("Dominant Perturbations \n Associated with Wave %s"%(nom+1))
     ax.plot(zonal_wind_perturbation,height_km, color="k", linewidth=1.5, zorder=0, label="Zonal Wind Speed [m/s]")
     ax.plot(meridional_wind_perturbation,height_km, color="red", linewidth=1.5, zorder=0,label="Meridional Wind Speed [m/s]")
     ax.plot(temperature_perturbations,height_km, color="blue", linewidth=1.5, linestyle='--', zorder=0,label="Temperature [C]")
@@ -358,12 +369,16 @@ def perturbations_associated_with_dominant_vertical_wavelengths(zonal_wind_pertu
     fig.tight_layout()
     
     if save_fig:
-        date_string = str(time.date())
-        date_string = date_string.replace("-", "")
+        
+        # If folder doesn't exist, create it
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+        
+        date_string, time_string = datafunctions.convert_timestamps_to_strings(time)
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_wave%s_dominant_perturbations.png" % (date_string, nom+1),
+            + "/%s_%.2fUTC_wave%s_dominant_perturbations.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
 
@@ -451,12 +466,17 @@ def plot_hodograph(zonal_wind_perturbation, meridional_wind_perturbation,height_
     fig.tight_layout()
     
     if save_fig:
-        date_string = str(time.date())
-        date_string = date_string.replace("-", "")
+             
+        # If folder doesn't exist, create it   
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+        
+        date_string, time_string = datafunctions.convert_timestamps_to_strings(time)
+
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_wave%s_simple_hodograph_plot.png" % (date_string, nom+1),
+            + "/%s_%.2f_UTC_wave%s_simple_hodograph_plot.png" % (date_string, time_string,nom+1),
             bbox_inches="tight",
         )
     plt.close(fig)
@@ -498,12 +518,16 @@ def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, ver
     fig.tight_layout()
     
     if save_fig:
-        date_string = str(time.date())
-        date_string = date_string.replace("-", "")
+        
+        # If folder doesn't exist, create it
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+            
+        date_string, time_string = datafunctions.convert_timestamps_to_strings(time)
 
         fig.savefig(
             path_to_save_figure
-            + "/%s_wave%s_FWHM.png" % (date_string, nom+1),
+            + "/%s_%.2fUTC_wave%s_FWHM.png" % (date_string,time_string, nom+1),
             bbox_inches="tight",
         )
 
@@ -595,18 +619,21 @@ def plot_hodograph_with_fitted_ellipse(zonal_wind_perturbation, meridional_wind_
     ax.xaxis.get_ticklocs(minor=True)
 
     ax.minorticks_on()
-    ax.legend(loc='upper left', fancybox=True)
+    ax.legend(loc='upper right', fancybox=True)
 
     fig.tight_layout()
     
     if save_fig:
-        date_string = str(time.date())
-        date_string = date_string.replace("-", "")
- 
-
+        
+        # If folder doesn't exist, create it
+        if not os.path.isdir(path_to_save_figure):
+            os.mkdir(path_to_save_figure)
+            
+        date_string, time_string = datafunctions.convert_timestamps_to_strings(time)
+        
         fig.savefig(
             path_to_save_figure
-            + "/%s_wave%s_hodograph_analysis.png" % (date_string, nom+1),
+            + "/%s_%.2fUTC_wave%s_hodograph_analysis.png" % (date_string, time_string, nom+1),
             bbox_inches="tight",
         )
     plt.close(fig)

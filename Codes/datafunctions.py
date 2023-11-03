@@ -5,9 +5,10 @@ import numpy as np
 import tqdm as tqdm
 import copy
 from scipy.signal import argrelmin
-from waveletFunctions import wavelet
 from skimage.feature import peak_local_max
 import datetime
+import os
+from waveletFunctions import wavelet
 
 ###########################################################
 
@@ -809,3 +810,28 @@ def get_ellipse_pts(params, npts=100, tmin=0, tmax=2*np.pi):
     x = x0 + ap * np.cos(t) * np.cos(phi) - bp * np.sin(t) * np.sin(phi)
     y = y0 + ap * np.cos(t) * np.sin(phi) + bp * np.sin(t) * np.cos(phi)
     return x, y
+
+
+def convert_timestamps_to_strings(timestamp):
+    """
+    Convert the timestamp to strings for better formatting. Mainly used in the plottingfunctions.py for
+    figure titles
+    
+    Arguments:
+        timestamp -- Pandas TimeStamp
+
+    Returns:
+        Returns the date and time component of the TimeStamp invididually as strings.
+    """    
+    
+    # Grab the date component
+    date_string = str(timestamp.date())
+    # replace the "-" with no space
+    date_string = date_string.replace("-", "")
+    
+    # Grab the time component
+    time_string = str(timestamp.time())
+    # Delete the "":" with no space
+    time_string = float(time_string.replace(":", ""))
+    
+    return date_string, time_string
