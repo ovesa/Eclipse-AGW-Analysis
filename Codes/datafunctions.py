@@ -90,7 +90,7 @@ def grab_initial_grawmet_profile_parameters(dataframe):
 def clean_data(dataframe, tropopause_height, original_data_shape):
     """
     Clean and preprocess the data by removing rows with bad values, rows where the height is not incrementally
-    increasing (radiosonde isn't ascending anymore), and rows with values that correspond below the tropopause.
+    increasing (the height where the radiosonde stops ascending), and rows with values that correspond below the tropopause.
 
     Arguments:
         dataframe -- The Pandas DataFrame to perform cleaning and preproccessing procedures.
