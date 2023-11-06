@@ -169,7 +169,7 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     u_zonal_perturbations,
     v_meridional_perturbations,
     temperature_perturbations,
-    time_UTC.iloc[0],
+    starting_time_for_flight,
     path_to_save_figures + "First_Order_Perturbations",save_fig=True)
 
 ################### Wavelet Analysis ###################
