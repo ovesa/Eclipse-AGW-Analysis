@@ -170,7 +170,7 @@ plottingfunctions.plot_vertical_profiles_with_residual_perturbations(
     v_meridional_perturbations,
     temperature_perturbations,
     time_UTC.iloc[0],
-    path_to_save_figures + "First_Order_Perturbations",save_fig=True,)
+    path_to_save_figures + "First_Order_Perturbations",save_fig=True)
 
 ################### Wavelet Analysis ###################
 # Wavelet Transform will isolate wave packets in wavenumber vs height space
