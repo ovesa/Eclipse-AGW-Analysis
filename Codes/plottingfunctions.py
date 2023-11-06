@@ -514,7 +514,7 @@ def plot_FWHM_wind_variance(horizontal_wind_variance,vertical_extent_coordx, ver
     ax.scatter(vertical_extent_coordx, horizontal_wind_variance[vertical_extent_coordx], s=40, color='red', edgecolor='k',zorder=1)
     ax.scatter(vertical_extent_coordy, horizontal_wind_variance[vertical_extent_coordy], s=40,  color='red', edgecolor='k',zorder=1)
 
-    ax.set_xlim([vertical_extent_coordx-100,vertical_extent_coordy+100])
+    ax.set_xlim([vertical_extent_coordx-300,vertical_extent_coordy+300])
     ax.set_ylabel(r"Horizontal Wind Variance [m$^2$/s$^2$]")
     ax.set_xlabel("Vertical Extent [indices]")
     fig.tight_layout()
