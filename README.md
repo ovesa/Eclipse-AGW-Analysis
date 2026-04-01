@@ -1,13 +1,35 @@
 # Eclipse-AGW-Analysis
 
-Analysis for detecting Atmospheric Gravity Waves (AGWs) using radiosonde data taken during a solar eclipse.
+Analysis pipeline for detecting Atmospheric Gravity Waves (AGWs) using radiosonde data collected during solar eclipses.
 
-This code reads in the GRAWMET profile for a particular launch and preprocesses it. Preprocessing steps include cleaning the data to remove bad values, linearly interpolating the data onto an evenly spaced spatial grid, and setting the desired spatial resolution.
+## Overview
 
-This script uses mainly the zonal wind speed, meridional wind speed, and temperature vertical profiles acquired from the radiosonde attached to the weather balloon. From these vertical profiles, the first-order perturbations, which are believed to be perturbations directly caused by AGWs, are calculated by subtracting the least squares polynomial fit ([Moffat-Griffin et. al, 2011](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2010JD015349)).
+This code reads in a GRAWMET profile for a given radiosonde launch and preprocesses it for AGW analysis. Preprocessing includes removing bad values, linearly interpolating onto an evenly spaced spatial grid, and setting the desired spatial resolution.
 
-A Wavelet Transform with the Morlet function ([Torrence and Campo, 1989](https://psl.noaa.gov/people/gilbert.p.compo/Torrence_compo1998.pdf)) that isolates the wave packets in wavenumber vs height space is performed for each of the mentioned parameters. From the zonal and meridional wavelet transformed coefficients, we can compute the power surface.
+## Methodology
 
-The next steps follow the procedure listed in [Zink and Vincent, 2001](https://digital.library.adelaide.edu.au/dspace/bitstream/2440/12560/1/hdl_12560.pdf). The power surface is scanned for local maxima above a certain threshold and within the cone of influence and wave significance determined by the Wavelet Transform. These local maxima correspond to potential AGWs. For each local maxima, we determine a rectangular boundary around the value where the power surface falls to 1/4 its value or rises again. Using only the values in the wavelet-transformed perturbation coefficients that fall within that rectangular boundary, we reconstruct the perturbations with an Inverse Wavelet Transform. The vertical extent of the potential AGW is determined by the full width half max (FWHM) of the horizontal wind variance.
+The pipeline uses vertical profiles of zonal wind speed, meridional wind speed, and temperature from the radiosonde. First-order perturbations — believed to be directly caused by AGWs are extracted by subtracting a least-squares polynomial fit ([Moffat-Griffin et al., 2011](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2010JD015349)).
 
-From here, we can compute the Stokes Parameters ([Eckermann, 1996](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/96JD01578)) to derive wave parameters such as the vertical wavelength, horizontal wavelength, propagation direction, phase and group speed, etc. All of these results are recorded in a .xlsx file. The program also creates several folders. A "Results" folder for where the .xlsx files are stored, and a "Figures" folder where the figures of the dominant vertical perturbations, first order perturbations, hodograph analysis, power surface, and wind variance FWHM are stored for each file and/or potential gravity wave.
+A Morlet Wavelet Transform ([Torrence & Compo, 1998](https://psl.noaa.gov/people/gilbert.p.compo/Torrence_compo1998.pdf)) is applied to each parameter to isolate wave packets in wavenumber–height space. The zonal and meridional wavelet coefficients are combined to compute a power surface.
+
+The power surface is then scanned for local maxima following the procedure of [Zink & Vincent, 2001](https://digital.library.adelaide.edu.au/dspace/bitstream/2440/12560/1/hdl_12560.pdf). Candidate AGWs are identified as maxima above a significance threshold and within the cone of influence. For each candidate, a rectangular boundary is defined where the power surface falls to one-quarter of its peak value (or begins to rise again), and an Inverse Wavelet Transform reconstructs the perturbations within that region. The vertical extent of each potential AGW is determined from the full-width at half-maximum (FWHM) of the horizontal wind variance.
+
+Finally, Stokes Parameters ([Eckermann, 1996](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/96JD01578)) are computed to derive wave properties including vertical and horizontal wavelength, propagation direction, and phase and group speed.
+
+## Output
+
+Results are saved to a `.xlsx` file in a `Results/` folder. Figures are saved to a `Figures/` folder and include:
+
+- Dominant vertical perturbations
+- First-order perturbations
+- Hodograph analysis
+- Power surface
+- Wind variance FWHM
+
+
+## Publications
+
+This code was used in the following peer-reviewed publications:
+
+- Shetye et al. (2024). *Characterization of Atmospheric Gravity Waves Observed During a Total Solar Eclipse in Granbury, Texas.* Bulletin of the AAS. DOI:10.3847/25c2cfeb.af234821. [Link](https://baas.aas.org/pub/2024n9i038/release/1)
+- Vesa et al. (2024). *Revealing the Dynamics of Atmospheric Gravity Waves: Insights from an Annular Solar Eclipse Event at Artesia Science Center, NM.* Bulletin of the AAS. DOI: 10.3847/25c2cfeb.5ceea9d5. [Link](https://baas.aas.org/pub/2024n9i043/release/2)
